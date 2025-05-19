@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_parking_registerbox_line_tree" model="ir.ui.view">
+        <field name="name">parking.registerbox.line.tree</field>
+        <field name="model">parking.registerbox.line</field>
+        <field name="arch" type="xml">
+            <list default_order="create_date desc">
+                <field name="create_date"/>
+                <field name="registerbox_id"/>
+                <field name="operation_type"/>
+                <field name="payment_form_id"/>
+                <field name="amount"/>
+                <field name="reversed_line_id"/>
+                <field name="comment"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- View específica para seleção de lançamentos no wizard de estorno -->
+    <record id="view_parking_registerbox_line_tree_selection" model="ir.ui.view">
+        <field name="name">parking.registerbox.line.tree.selection</field>
+        <field name="model">parking.registerbox.line</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="create_date" string="Data"/>
+                <field name="operation_type" string="Tipo"/>
+                <field name="payment_form_id" string="Forma Pagto"/>
+                <field name="amount" string="Valor"/>
+                <field name="comment" string="Observação"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_parking_registerbox_line_form" model="ir.ui.view">
+        <field name="name">parking.registerbox.line.form</field>
+        <field name="model">parking.registerbox.line</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                <group>
+                            <field name="registerbox_id" 
+                                   domain="[('state', '=', 'open')]"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="operation_type"/>
+                    <field name="payment_form_id"/>
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" options="{'no_create': True, 'no_open': True}" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="create_date"/>
+                            <field name="create_uid"/>
+                            <field name="reversed_line_id" 
+                                   invisible="operation_type != 'reversal'"
+                                   required="operation_type == 'reversal'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Observações" name="notes">
+                            <field name="comment" placeholder="Digite aqui suas observações..."/>
+                        </page>
+                        <page string="Estornos" name="reversals" invisible="not reversal_line_ids">
+                            <field name="reversal_line_ids" readonly="1">
+                                <list>
+                                    <field name="create_date"/>
+                                    <field name="amount"/>
+                                    <field name="create_uid"/>
+                    <field name="comment"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- View principal para lista de lançamentos -->
+    <record id="view_parking_registerbox_line_tree_all" model="ir.ui.view">
+        <field name="name">parking.registerbox.line.tree.all</field>
+        <field name="model">parking.registerbox.line</field>
+        <field name="type">list</field>
+        <field name="arch" type="xml">
+            <list default_order="create_date desc">
+                <field name="create_date" string="Data/Hora"/>
+                <field name="registerbox_id" string="Caixa"/>
+                <field name="operation_type" string="Tipo de Operação" widget="badge" decoration-success="operation_type == 'add'" decoration-danger="operation_type == 'remove'" decoration-info="operation_type == 'payment'" decoration-warning="operation_type == 'reversal'"/>
+                <field name="payment_form_id" string="Forma de Pagamento"/>
+                <field name="amount" string="Valor" sum="Total"/>
+                <field name="create_uid" string="Usuário"/>
+                <field name="reversed_line_id" string="Lançamento Estornado" optional="show"/>
+                <field name="comment" string="Observação"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+</odoo> 

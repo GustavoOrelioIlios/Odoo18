@@ -1,0 +1,65 @@
+<odoo>
+    <record id="view_camera_form" model="ir.ui.view">
+        <field name="name">camera.management.form</field>
+        <field name="model">camera.management</field>
+        <field name="arch" type="xml">
+            <form string="Câmera">
+                <header>
+                    <button name="capturar_imagem_ISAPI"
+                            type="object"
+                            string="Capturar Imagem"
+                            class="btn btn-primary"/>
+                </header>
+                <sheet>                    
+                    <group id="header_left_group">
+                        <field name="name"/>
+                        <field name="model"/>
+                        <field name="ip_address"/>
+                        <field name="port"/>
+                        <field name="username"/>
+                        <field name="password" password="True"/>
+                        <field name="location"/>
+                        <field name="camera_type"/>
+                        <field name="company_id"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Imagem Capturada">
+                            <group  style="min-width:500px; max-width:700px;">
+                                <field name="image_attachment_id"
+                                    widget="image"
+                                    options="{'preview_image': 'datas'}"
+                                    readonly="1"
+                                    style="width:200%; height:200%;"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter reload_on_attachment="True"/>  
+            </form>
+        </field>
+    </record>
+
+    <record id="view_camera_list" model="ir.ui.view">
+        <field name="name">camera.management.list</field>
+        <field name="model">camera.management</field>
+        <field name="arch" type="xml">
+            <list string="Câmeras">
+                <field name="name"/>
+                <field name="ip_address"/>
+                <field name="location"/>
+                <field name="camera_type"/>
+                <field name="company_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_camera_management" model="ir.actions.act_window">
+        <field name="name">Câmeras</field>
+        <field name="res_model">camera.management</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_camera_root" name="Gestão de Câmeras" web_icon="camera_management,static/description/icon.png"/>  
+    <menuitem id="menu_camera" name="Câmeras" parent="menu_camera_root" action="action_camera_management"/>
+</odoo>

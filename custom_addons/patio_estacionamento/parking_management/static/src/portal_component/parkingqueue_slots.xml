@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="parking_management.ParkingqueueSlots">
+
+    
+        <div class="o_portal_my_home">
+            
+                <div class="o_portal_my_home_content">
+                    
+                    <table>
+                        <tbody>
+                         
+                        </tbody>
+                    </table>
+                </div>
+            
+        </div>
+    
+
+    </t>
+</templates>

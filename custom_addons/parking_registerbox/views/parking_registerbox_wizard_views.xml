@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Window Actions -->
+    <record id="action_parking_registerbox_cash_add_wizard" model="ir.actions.act_window">
+        <field name="name">Suprimento de Caixa</field>
+        <field name="res_model">parking.registerbox.cash.add.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_parking_registerbox_cash_remove_wizard" model="ir.actions.act_window">
+        <field name="name">Sangria de Caixa</field>
+        <field name="res_model">parking.registerbox.cash.remove.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_parking_registerbox_reversal_wizard" model="ir.actions.act_window">
+        <field name="name">Estorno de Lançamento</field>
+        <field name="res_model">parking.registerbox.reversal.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- Cash Addition Wizard -->
+    <record id="view_parking_registerbox_cash_add_wizard_form" model="ir.ui.view">
+        <field name="name">parking.registerbox.cash.add.wizard.form</field>
+        <field name="model">parking.registerbox.cash.add.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="registerbox_id" invisible="1"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="amount"/>
+                        <field name="comment" required="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Confirmar Suprimento" 
+                            name="action_add_cash" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button string="Cancelar" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Cash Removal Wizard -->
+    <record id="view_parking_registerbox_cash_remove_wizard_form" model="ir.ui.view">
+        <field name="name">parking.registerbox.cash.remove.wizard.form</field>
+        <field name="model">parking.registerbox.cash.remove.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="registerbox_id" invisible="1"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="amount"/>
+                        <field name="comment" required="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Confirmar Sangria" 
+                            name="action_remove_cash" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button string="Cancelar" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Reversal Wizard -->
+    <record id="view_parking_registerbox_reversal_wizard_form" model="ir.ui.view">
+        <field name="name">parking.registerbox.reversal.wizard.form</field>
+        <field name="model">parking.registerbox.reversal.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="registerbox_id" invisible="1"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="line_id" 
+                               domain="[('registerbox_id', '=', registerbox_id), ('operation_type', '!=', 'reversal'), ('reversal_line_ids', '=', False)]" 
+                               options="{'no_create': True, 'no_open': True}"
+                               can_create="false"
+                               can_write="false"/>
+                    </group>
+                    <group string="Informações do Lançamento Selecionado" invisible="not line_id">
+                        <field name="selected_operation_type"/>
+                        <field name="selected_payment_form"/>
+                        <field name="selected_amount"/>
+                        <field name="selected_comment"/>
+                    </group>
+                    <group string="Informações do Estorno">
+                        <field name="amount"/>
+                        <field name="comment" required="1" placeholder="Digite o motivo do estorno..."/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Confirmar Estorno" 
+                            name="action_reverse" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <button string="Cancelar" 
+                            class="btn-secondary" 
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo> 

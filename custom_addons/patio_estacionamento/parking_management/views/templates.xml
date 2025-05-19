@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="parking_management.portal_my_home" inherit_id="portal.portal_my_home">
+        <xpath expr="//*[hasclass('o_portal_my_home')]" position="before">
+            <owl-component name="parking_management.ParkingqueueSlots" />
+        </xpath>
+    </template>
+</odoo>

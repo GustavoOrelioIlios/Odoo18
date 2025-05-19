@@ -1,0 +1,160 @@
+<odoo>
+    <data>
+        <!-- Form View -->
+        <record id="view_parking_booking_form" model="ir.ui.view">
+            <field name="name">parking.booking.form</field>
+            <field name="model">parking.booking</field>
+            <field name="arch" type="xml">
+                <form>            
+                    <header>
+                        <button name="truck_checkin" 
+                            string="Check-IN" 
+                            type="object"
+                            class="oe_highlight"
+                            invisible= "state not in ('provisorio','agendado') " 
+                            groups = "parking_management.group_parking_manager"
+                        />
+                        <button name="truck_checkout" 
+                            string="Check-OUT" 
+                            type="object"
+                            class="oe_highlight"
+                            invisible= "state not in ('checkin') " 
+                            groups = "parking_management.group_parking_manager"
+                        />
+
+                        <field name="state"  widget="statusbar"/>                        
+                    </header>
+                    <sheet>
+                        <group>
+                                <field name="tractor_plate" required="1" maxlength="8"/> 
+                        </group>
+                        
+                        <group>    
+
+                            <group id="header_left_group"> 
+                                <field name="client_id" required="1" options="{'no_open': True, 'no_create': True}"/>                            
+                                <field name="parking_slot_id" required="state == 'checkin'"/>
+                                <field name="parking_queue_id"/>
+                                <field name="name"/>
+                                <field name="user_id_checkin"/>
+                            </group>
+                                                
+                            <group id="header_right_group">
+                                <field name="start_date"/>
+                                <field name="end_date"/>
+                                <field name="checkin_date"/>
+                                <field name="checkout_date"/>
+                                <field name="user_id_checkout"/>
+                            </group>
+                            
+                        </group>
+                        <notebook>
+
+                            <page id="truck_tab" string="Informações da Caminhão" name="truck_tab">
+                                <group>
+                                    <field name="tractor_plate" readonly="1"/> 
+                                    <field name="trailer_plate_1"/> 
+                                    <field name="trailer_plate_2"/>
+                                    <field name="trailer_plate_3"/>
+                                </group>
+                            </page>
+
+                            <page id="driver_tab" string="Motorista" name="driver_tab">
+                                <group id="driver_tab_group">
+                                    <group name="driver_group">
+                                        <field name="driver_name"/>
+                                        <field name="driver_cpf"/>
+                                        <field name="driver_mobile"/>
+                                    </group>
+                                </group>
+                            </page>
+
+                            <page id="cargo_tab" string="Informações da Carga" name="cargo_tab">
+                                    <group>
+                                        <group id="header_left_group">
+                                            <field name="cargo_cliente_name"/>
+                                            <field name="cargo_cliente_cnpj"/>
+                                            <field name="carrier_name"/>
+                                            <field name="carrier_cnpj"/>
+                                            <field name="operation"/>
+                                        </group>
+                                        <group id="header_right_group">
+                                            <field name="product"/>
+                                            <field name="cargo_packaging"/>
+                                            <field name="booking_cargo_weight"/>
+                                            <field name="planta_code"/>
+                                            <field name="parking_lot_code"/>
+                                        </group>
+                                    </group>
+                            </page>
+
+
+                            <page id="contract_tab" string="Informações do Contrato" name="contract_tab">
+                                    <group>
+                                        <field name="contract_id"/>
+                                        <field name="contract_external_id"/>
+                                        <field name="company_id"/>                         
+                                        <field name="active" widget="boolean_toggle" />
+                                    </group>
+                            </page>
+
+                        </notebook>                      
+
+                        <group>
+                            <field name="observation"/>
+                        </group>
+
+                    </sheet>
+                    <chatter reload_on_attachment="True"/>
+                </form>
+            </field>
+        </record>
+
+        <!-- list View -->
+        <record id="view_parking_booking_list" model="ir.ui.view">
+            <field name="name">parking.booking.list</field>
+            <field name="model">parking.booking</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="name"/>
+                    <field name="tractor_plate"/>
+                    <field name="state"/> 
+                    <field name="parking_slot_id"/> 
+                    <field name="parking_queue_id"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="checkin_date"/>
+                    <field name="checkout_date"/>
+                    <!-- <field name="contract_external_id"/> -->
+                    <field name="client_id"/>
+                    <field name="company_id"/>
+                    <!-- <field name="operation"/>
+                    <field name="cargo_cliente_name"/> -->
+                    <field name="carrier_name"/>
+                    <!-- <field name="driver_name"/> -->
+                    <!-- <field name="user_id_checkin"/> -->
+                    <!-- <field name="user_id_checkout"/> -->
+                </list>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_parking_booking" model="ir.actions.act_window">
+            <field name="name">Agendamentos</field>
+            <field name="res_model">parking.booking</field>
+            <field name="view_mode">list,form</field>
+                    <field name="help" type="html">
+        <p class="o_view_nocontent_empty_folder">
+            Não tem agendamentos de pátio registrados. 
+        </p><p>
+            Agendamentos podem ser cadastradas manualmente ou importadas via integração com API da Trizy.
+        </p>
+        </field>
+        </record>
+
+
+
+
+ 
+    </data>
+</odoo>

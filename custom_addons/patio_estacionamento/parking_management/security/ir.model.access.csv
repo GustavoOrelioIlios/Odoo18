@@ -1,0 +1,14 @@
+id,name,model_id/id,group_id/id,perm_read,perm_write,perm_create,perm_unlink
+parking_queue_user,"Visualizar filas",model_parking_queue,group_parking_user,1,0,0,0
+parking_queue_manager,"Gerenciar filas",model_parking_queue,group_parking_manager,1,1,1,0
+parking_queue_admin,"Administração filas",model_parking_queue,group_parking_admin,1,1,1,1
+
+parking_booking_user,"Visualizar Agendamentos",model_parking_booking,group_parking_user,1,0,0,0
+parking_booking_manager,"Gerenciar Agendamentos",model_parking_booking,group_parking_manager,1,1,1,0
+parking_booking_admin,"Administração Agendamentos",model_parking_booking,group_parking_admin,1,1,1,1
+
+
+
+parking_slots_user,"Visualizar Vagas",model_parking_slots,group_parking_user,1,0,0,0
+parking_slots_manager,"Gerenciar Vagas",model_parking_slots,group_parking_manager,1,0,0,0
+parking_slots_admin,"Administração Vagas",model_parking_slots,group_parking_admin,1,1,1,1

@@ -1,0 +1,75 @@
+<odoo>
+    <data>
+        <!-- Form View -->
+        <record id="view_parking_queue_form" model="ir.ui.view">
+            <field name="name">parking.queue.form</field>
+            <field name="model">parking.queue</field>
+            <field name="arch" type="xml">
+                <form string="Gestão de Filas">
+                <header>
+                    <button name="add_slots" 
+                        string="Criar vagas" 
+                        type="object"
+                        class="oe_highlight"
+                        invisible= "state not in ('provisorio') " 
+                        groups = "parking_management.group_parking_manager"
+                    />
+                    <field name="state"  widget="statusbar"/>   
+                </header>
+                <sheet>
+                    <group>
+                    <field  name="name" required="1"/>
+                    <field  name="client_id" required="1" />
+                    <field  name="contract_capacity" required="1" />
+                    <field  name="intial_slot" />
+                    <field  name="company_id" required="1"/>
+                    <field  name="active" widget="boolean_toggle"/>
+                    <field  name="description"/>
+                    </group>
+                        <notebook>
+
+                            <page id="slots_tab" string="Vagas da Fila" name="slots_tab">
+                                <field name="slot_ids" widget="one2many_list">
+                                    <list string="Vagas">
+                                        <field name="name"/>
+                                        <field name="state"/>
+                                        <field name="booking_id"/>                                        
+                                    </list>
+                                </field>
+                            </page>
+
+                        </notebook>
+
+
+                </sheet>
+                <chatter reload_on_attachment="True"/>
+                </form>
+            </field>
+        </record>
+
+        <!-- List View -->
+        <record id="view_parking_queue_list" model="ir.ui.view">
+            <field name="name">parking.queue.list</field>
+            <field name="model">parking.queue</field>
+            <field name="arch" type="xml">
+                <list string="Gestão de Filas">
+                    <field  name="name"/>
+                    <field  name="description"/>
+                    <field  name="client_id"/>
+                    <field  name="contract_capacity"/>
+                    <field  name="company_id"/>
+                    <!-- <field = name="active"/> -->
+                </list>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_parking_queue" model="ir.actions.act_window">
+            <field name="name">Gestão Filas do Pátio</field>
+            <field name="res_model">parking.queue</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        
+    </data>
+</odoo>

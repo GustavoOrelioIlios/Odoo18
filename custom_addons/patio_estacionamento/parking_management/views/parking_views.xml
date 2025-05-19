@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Top menu item -->
+    <menuitem id='menu_parking_management' name='Gestão de pátio' sequence="2"  web_icon="parking_management,static/description/icon.png"/>
+       
+        <menuitem id="menu_parking_booking" name="Parking Bookings"  sequence="1" />                        
+         <menuitem id="menu_parking_booking_list" name="Agendamentos" parent="menu_parking_management" action="action_parking_booking" /> 
+        
+
+
+        <menuitem id="menu_parking_queue" name="Parking Queue"  sequence="2" />
+            <menuitem id="menu_parking_queue_list" name="Filas do Pátio" parent="menu_parking_management" action="action_parking_queue"/>
+        
+        <menuitem id="menu_parking_slots" name="Parking Slots" sequence="3"/>
+            <menuitem id="menu_parking_slots_list" name="Vagas" parent="menu_parking_management" action="action_parking_slots"/>
+
+    
+</odoo>
+

@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_auth_oauth_provider_all,auth.oauth.provider,model_auth_oauth_provider,,1,0,0,0
+access_auth_oauth_provider_admin,auth.oauth.provider,model_auth_oauth_provider,base.group_system,1,1,1,1

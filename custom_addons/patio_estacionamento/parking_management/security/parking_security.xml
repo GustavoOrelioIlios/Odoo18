@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<odoo>
+
+        <record id="parking_management.module_parking_category" model="ir.module.category">
+            <field name="name">Gestao patio</field>
+            <field name="sequence">8</field>
+        </record>
+
+        <record id="group_parking_user" model="res.groups">
+            <field name="name">Visualização do pátio</field>
+            <field name="category_id" ref="parking_management.module_parking_category"/>
+        </record>
+
+        <record id="group_parking_manager" model="res.groups">
+            <field name="name">Operador do pátio</field>
+            <field name="implied_ids" eval="[(4, ref('group_parking_user'))]"/>                        
+            <field name="category_id" ref="parking_management.module_parking_category"/>
+        </record>
+
+        <record id="group_parking_admin" model="res.groups">
+            <field name="name">Administrador do pátio</field>
+            <field name="implied_ids" eval="[(4, ref('group_parking_manager'))]"/>            
+            <field name="category_id" ref="parking_management.module_parking_category"/>
+            <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+        </record>
+
+    <data noupdate="1">
+        <record id="parking_booking_company_rule" model="ir.rule">
+            <field name="name">Pátio Agendamentos Multi-Empresa</field>
+            <field name="model_id" ref="model_parking_booking"/>
+            <field name="domain_force">['|' , ('company_id', 'in', company_ids) , ('company_id.parent_id', 'in', company_ids) ]</field>
+        </record>
+
+        <record id="parking_queue_company_rule" model="ir.rule">
+            <field name="name">Filas Multi-Empresa</field>
+            <field name="model_id" ref="model_parking_queue"/>
+            <field name="domain_force">['|' , ('company_id', 'in', company_ids) , ('company_id.parent_id', 'in', company_ids) ]</field>
+        </record>
+
+        <record id="parking_slots_company_rule" model="ir.rule">
+            <field name="name">Vagas Multi-Empresa</field>
+            <field name="model_id" ref="model_parking_slots"/>
+            <field name="domain_force">['|' , ('company_id', 'in', company_ids) , ('company_id.parent_id', 'in', company_ids) ]</field>
+        </record>                
+    </data>    
+</odoo>
