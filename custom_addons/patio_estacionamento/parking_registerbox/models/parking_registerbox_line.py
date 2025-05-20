@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from odoo.osv import expression
 
 class ParkingRegisterBoxLine(models.Model):
     _name = 'parking.registerbox.line'
@@ -54,3 +55,13 @@ class ParkingRegisterBoxLine(models.Model):
                 if line.amount == line.reversed_line_id.amount:
                     raise UserError(_('O valor do estorno deve ter sinal oposto ao lançamento original.'))
     # Parking_booking_id = fields.Many2one('parking.booking', string='Reserva')  # Manter comentado no inicio
+
+    @api.model
+    def search(self, args, offset=0, limit=None, order=None):
+        if not args:
+            args = []
+        user = self.env.user
+        if not self.env.is_superuser():
+            if user.has_group('parking_management.group_parking_manager') and not user.has_group('parking_management.group_parking_admin'):
+                args = expression.AND([args, [('create_uid', '=', user.id)]])
+        return super(ParkingRegisterBoxLine, self).search(args, offset=offset, limit=limit, order=order)

@@ -6,7 +6,7 @@
         <field name="res_model">parking.registerbox</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_parking_registerbox_tree"/>
-        <field name="domain">[('create_uid', '=', uid)]</field>
+        <field name="domain">[("create_uid", "=", uid)]</field>
         <field name="context">{'create': True}</field>
         <field name="target">current</field>
         <field name="help" type="html">
@@ -37,6 +37,7 @@
         <field name="res_model">parking.registerbox.line</field>
         <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_parking_registerbox_line_tree_all"/>
+        <field name="domain">[("create_uid", "=", uid)]</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Nenhum lançamento encontrado
@@ -67,35 +68,43 @@
     </record>
 
     <!-- Menus -->
-    <menuitem id="menu_parking_root" name="Caixas" sequence="10"/>
+    <menuitem id="menu_parking_root" 
+              name="Caixas" 
+              sequence="10"
+              groups="parking_management.group_parking_manager,parking_management.group_parking_admin"/>
 
     <menuitem id="menu_parking_registerbox_my" 
               name="Minhas Caixas" 
               parent="menu_parking_root" 
               action="action_parking_registerbox_my" 
-              sequence="1"/>
+              sequence="1"
+              groups="parking_management.group_parking_manager"/>
 
     <menuitem id="menu_parking_registerbox_all" 
               name="Histórico de Caixas" 
               parent="menu_parking_root" 
               action="action_parking_registerbox_all" 
-              sequence="2"/>
+              sequence="2"
+              groups="parking_management.group_parking_admin"/>
 
     <menuitem id="menu_parking_registerbox_line" 
               name="Lançamentos" 
               parent="menu_parking_root" 
               action="action_parking_registerbox_line" 
-              sequence="3"/>
+              sequence="3"
+              groups="parking_management.group_parking_manager"/>
 
     <menuitem id="menu_parking_payment_form" 
               name="Formas de Pagamento" 
               parent="menu_parking_root" 
               action="action_parking_payment_form" 
-              sequence="4"/>
+              sequence="4"
+              groups="parking_management.group_parking_admin"/>
 
     <menuitem id="menu_parking_cost" 
               name="Regras de Cálculo" 
               parent="menu_parking_root" 
               action="action_parking_cost" 
-              sequence="5"/>
+              sequence="5"
+              groups="parking_management.group_parking_admin"/>
 </odoo> 
