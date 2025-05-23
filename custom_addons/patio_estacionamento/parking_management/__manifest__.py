@@ -13,10 +13,12 @@
         'base',
         'mail',
         'camera_management',
+        'parking_registerbox',
     ],
     'data': [
         'security/parking_security.xml',
         'security/ir.model.access.csv',
+        'wizards/parking_payment_wizard_views.xml',
         'views/parking_booking_views.xml',
         'views/parking_queue_views.xml',
         'views/parking_slots_views.xml',

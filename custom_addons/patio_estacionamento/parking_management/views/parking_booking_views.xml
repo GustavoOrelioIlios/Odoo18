@@ -22,11 +22,18 @@
                             groups = "parking_management.group_parking_manager"
                         />
 
+                        <button name="action_register_payment"
+                            string="Registrar Pagamento"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'checkout' or payment_state == 'paid'"
+                            groups = "parking_management.group_parking_manager"
+                        />
                         <field name="state"  widget="statusbar"/>                        
                     </header>
                     <sheet>
                         <group>
-                                <field name="tractor_plate" required="1" maxlength="8"/> 
+                            <field name="tractor_plate" required="1" maxlength="8"/> 
                         </group>
                         
                         <group>    
@@ -70,34 +77,46 @@
                             </page>
 
                             <page id="cargo_tab" string="Informações da Carga" name="cargo_tab">
-                                    <group>
-                                        <group id="header_left_group">
-                                            <field name="cargo_cliente_name"/>
-                                            <field name="cargo_cliente_cnpj"/>
-                                            <field name="carrier_name"/>
-                                            <field name="carrier_cnpj"/>
-                                            <field name="operation"/>
-                                        </group>
-                                        <group id="header_right_group">
-                                            <field name="product"/>
-                                            <field name="cargo_packaging"/>
-                                            <field name="booking_cargo_weight"/>
-                                            <field name="planta_code"/>
-                                            <field name="parking_lot_code"/>
-                                        </group>
+                                <group>
+                                    <group id="header_left_group">
+                                        <field name="cargo_cliente_name"/>
+                                        <field name="cargo_cliente_cnpj"/>
+                                        <field name="carrier_name"/>
+                                        <field name="carrier_cnpj"/>
+                                        <field name="operation"/>
                                     </group>
+                                    <group id="header_right_group">
+                                        <field name="product"/>
+                                        <field name="cargo_packaging"/>
+                                        <field name="booking_cargo_weight"/>
+                                        <field name="planta_code"/>
+                                        <field name="parking_lot_code"/>
+                                    </group>
+                                </group>
                             </page>
 
 
                             <page id="contract_tab" string="Informações do Contrato" name="contract_tab">
-                                    <group>
-                                        <field name="contract_id"/>
-                                        <field name="contract_external_id"/>
-                                        <field name="company_id"/>                         
-                                        <field name="active" widget="boolean_toggle" />
-                                    </group>
+                                <group>
+                                    <field name="contract_id"/>
+                                    <field name="contract_external_id"/>
+                                    <field name="company_id"/>                         
+                                    <field name="active" widget="boolean_toggle" />
+                                </group>
                             </page>
 
+                            <page id="billing_tab" string="Faturamento" name="billing_tab">
+                                <group>
+                                    <group string="Valores">
+                                        <field name="total_amount"/>
+                                        <field name="remaining_amount"/>
+                                        <field name="payment_state"/>
+                                    </group>
+                                </group>
+                                <group string="Lançamentos">
+                                    <field name="payment_line_ids" readonly="1" nolabel="1" context="{'default_parking_booking_id': id}" view_mode="tree" views="view_parking_registerbox_line_tree_booking"/>
+                                </group>
+                            </page>
                         </notebook>                      
 
                         <group>
@@ -143,13 +162,13 @@
             <field name="name">Agendamentos</field>
             <field name="res_model">parking.booking</field>
             <field name="view_mode">list,form</field>
-                    <field name="help" type="html">
-        <p class="o_view_nocontent_empty_folder">
-            Não tem agendamentos de pátio registrados. 
-        </p><p>
-            Agendamentos podem ser cadastradas manualmente ou importadas via integração com API da Trizy.
-        </p>
-        </field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_empty_folder">
+                    Não tem agendamentos de pátio registrados. 
+                </p><p>
+                    Agendamentos podem ser cadastradas manualmente ou importadas via integração com API da Trizy.
+                </p>
+            </field>
         </record>
 
 

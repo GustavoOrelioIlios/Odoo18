@@ -12,3 +12,11 @@ parking_booking_admin,"Administração Agendamentos",model_parking_booking,group
 parking_slots_user,"Visualizar Vagas",model_parking_slots,group_parking_user,1,0,0,0
 parking_slots_manager,"Gerenciar Vagas",model_parking_slots,group_parking_manager,1,0,0,0
 parking_slots_admin,"Administração Vagas",model_parking_slots,group_parking_admin,1,1,1,1
+
+access_parking_booking_user,parking.booking.user,model_parking_booking,parking_management.group_parking_user,1,0,0,0
+access_parking_booking_manager,parking.booking.manager,model_parking_booking,parking_management.group_parking_manager,1,1,1,1
+access_parking_queue_user,parking.queue.user,model_parking_queue,parking_management.group_parking_user,1,0,0,0
+access_parking_queue_manager,parking.queue.manager,model_parking_queue,parking_management.group_parking_manager,1,1,1,1
+access_parking_slots_user,parking.slots.user,model_parking_slots,parking_management.group_parking_user,1,0,0,0
+access_parking_slots_manager,parking.slots.manager,model_parking_slots,parking_management.group_parking_manager,1,1,1,1
+access_parking_payment_wizard_manager,parking.payment.wizard.manager,model_parking_payment_wizard,parking_management.group_parking_manager,1,1,1,0

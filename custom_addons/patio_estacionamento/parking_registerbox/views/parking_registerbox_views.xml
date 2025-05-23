@@ -136,6 +136,7 @@
         <field name="arch" type="xml">
             <list>
                 <field name="registerbox_id"/>
+                <field name="amount"/>
                 <field name="payment_form_id"/>
                 <field name="comment"/>
                 <field name="company_id"/>

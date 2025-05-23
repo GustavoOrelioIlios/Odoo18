@@ -1,4 +1,4 @@
-from odoo import models, fields, api, _
+from odoo import models, fields, api
 from odoo.exceptions import UserError
 from odoo.osv import expression
 
@@ -44,17 +44,16 @@ class ParkingRegisterBoxLine(models.Model):
     def _check_box_state(self):
         for line in self:
             if line.registerbox_id.state != 'open':
-                raise UserError(_('Não é possível criar lançamentos em um caixa fechado.'))
+                raise UserError(('Não é possível criar lançamentos em um caixa fechado.'))
 
     @api.constrains('amount', 'operation_type')
     def _check_amount(self):
         for line in self:
             if line.operation_type == 'reversal':
                 if abs(line.amount) > abs(line.reversed_line_id.amount):
-                    raise UserError(_('O valor do estorno não pode ser maior que o valor do lançamento original.'))
+                    raise UserError(('O valor do estorno não pode ser maior que o valor do lançamento original.'))
                 if line.amount == line.reversed_line_id.amount:
-                    raise UserError(_('O valor do estorno deve ter sinal oposto ao lançamento original.'))
-    # Parking_booking_id = fields.Many2one('parking.booking', string='Reserva')  # Manter comentado no inicio
+                    raise UserError(('O valor do estorno deve ter sinal oposto ao lançamento original.'))
 
     @api.model
     def search(self, args, offset=0, limit=None, order=None):

@@ -1,6 +1,7 @@
 from odoo import models, fields,api
 from odoo.exceptions import UserError, ValidationError
 import re
+from datetime import datetime, timedelta
 
 class ParkingBooking(models.Model):
     _name = 'parking.booking'
@@ -47,6 +48,16 @@ class ParkingBooking(models.Model):
     trailer_plate_1 = fields.Char(string='Placa da Carreta 1', tracking=True)
     trailer_plate_2 = fields.Char(string='Placa da Carreta 2', tracking=True)
     trailer_plate_3 = fields.Char(string='Placa da Carreta 3', tracking=True)
+
+    # Billing fields
+    total_amount = fields.Float(string='Valor Total', compute='_compute_total_amount', store=True, tracking=True)
+    remaining_amount = fields.Float(string='Valor Restante', compute='_compute_remaining_amount', store=True, tracking=True)
+    payment_line_ids = fields.One2many('parking.registerbox.line', 'parking_booking_id', string='Lançamentos', readonly=True)
+    payment_state = fields.Selection([
+        ('pending', 'Pendente'),
+        ('partial', 'Parcial'),
+        ('paid', 'Pago')
+    ], string='Status do Pagamento', compute='_compute_payment_state', store=True, tracking=True)
 
     def write(self, vals):
         if 'state' in vals and vals['state'] == 'checkin' and not vals.get('parking_slot_id', self.parking_slot_id):
@@ -150,6 +161,75 @@ class ParkingBooking(models.Model):
     def _onchange_tractor_plate(self):
         if self.tractor_plate:
             self.tractor_plate = self.tractor_plate.upper()
+
+    @api.depends('checkin_date', 'checkout_date')
+    def _compute_total_amount(self):
+        for record in self:
+            if record.checkin_date and record.checkout_date:
+                # Get the active cost rule
+                cost_rule = self.env['parking.cost'].search([
+                    ('company_id', '=', record.company_id.id),
+                    ('active', '=', True)
+                ], limit=1)
+                
+                if not cost_rule:
+                    record.total_amount = 0
+                    continue
+
+                # Calculate duration in hours
+                duration = (record.checkout_date - record.checkin_date).total_seconds() / 3600
+                # Round up to the next hour
+                duration = round(duration + 0.5)
+                
+                # Calculate total amount
+                record.total_amount = duration * cost_rule.value
+            else:
+                record.total_amount = 0
+
+    @api.depends('total_amount', 'payment_line_ids.amount', 'payment_line_ids.operation_type')
+    def _compute_remaining_amount(self):
+        for record in self:
+            paid_amount = sum(record.payment_line_ids.filtered(
+                lambda l: l.operation_type == 'payment'
+            ).mapped('amount'))
+            reversed_amount = sum(record.payment_line_ids.filtered(
+                lambda l: l.operation_type == 'reversal'
+            ).mapped('amount'))
+            record.remaining_amount = record.total_amount - (paid_amount + reversed_amount)
+
+    @api.depends('total_amount', 'remaining_amount')
+    def _compute_payment_state(self):
+        for record in self:
+            if record.total_amount == 0 or not record.checkout_date:
+                record.payment_state = 'pending'
+            elif record.remaining_amount <= 0:
+                record.payment_state = 'paid'
+            elif record.remaining_amount < record.total_amount:
+                record.payment_state = 'partial'
+            else:
+                record.payment_state = 'pending'
+
+    def action_register_payment(self):
+        """Open the payment wizard"""
+        self.ensure_one()
+        
+        if not self.checkout_date:
+            raise UserError(('Não é possível registrar pagamento antes do checkout.'))
+            
+        if self.payment_state == 'paid':
+            raise UserError(('Este agendamento já está totalmente pago.'))
+            
+        return {
+            'name': ('Registrar Pagamento'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'parking.payment.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_parking_booking_id': self.id,
+                'default_amount': self.remaining_amount,
+            }
+        }
 
 
 
