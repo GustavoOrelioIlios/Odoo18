@@ -95,5 +95,6 @@ class ParkingRegisterBoxReversalWizard(models.TransientModel):
             'operation_type': 'reversal',
             'comment': self.comment,
             'reversed_line_id': self.line_id.id,
+            'parking_booking_id': self.line_id.parking_booking_id.id,
         })
         return {'type': 'ir.actions.act_window_close'} 

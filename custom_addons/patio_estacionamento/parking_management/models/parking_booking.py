@@ -195,7 +195,7 @@ class ParkingBooking(models.Model):
             reversed_amount = sum(record.payment_line_ids.filtered(
                 lambda l: l.operation_type == 'reversal'
             ).mapped('amount'))
-            record.remaining_amount = record.total_amount - (paid_amount + reversed_amount)
+            record.remaining_amount = record.total_amount - paid_amount + abs(reversed_amount)
 
     @api.depends('total_amount', 'remaining_amount')
     def _compute_payment_state(self):

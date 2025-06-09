@@ -95,6 +95,7 @@
                                     <field name="operation_type"/>
                                     <field name="payment_form_id" required="1"/>
                                     <field name="amount"/>
+                                    <field name="parking_booking_id" string="Agendamento" optional="show"/>
                                     <field name="reversed_line_id" optional="show"/>
                                     <field name="comment"/>
                                     <field name="company_id" invisible="1"/>
@@ -136,8 +137,9 @@
         <field name="arch" type="xml">
             <list>
                 <field name="registerbox_id"/>
-                <field name="amount"/>
                 <field name="payment_form_id"/>
+                <field name="amount"/>
+                <field name="operation_type"/>
                 <field name="comment"/>
                 <field name="company_id"/>
             </list>

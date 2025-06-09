@@ -39,6 +39,13 @@ class ParkingRegisterBoxLine(models.Model):
     company_id = fields.Many2one('res.company', string='Pátio', required=True, default=lambda self: self.env.company.id)
     create_date = fields.Datetime(string='Data do Lançamento', readonly=True)
     create_uid = fields.Many2one('res.users', string='Usuário', readonly=True)
+    parking_booking_id = fields.Many2one(
+        'parking.booking',
+        string='Agendamento',
+        ondelete='restrict',
+        index=True,
+        copy=False
+    )
 
     @api.constrains('registerbox_id', 'operation_type')
     def _check_box_state(self):
