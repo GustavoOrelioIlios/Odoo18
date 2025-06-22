@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Inherit Form View to add Itaú specific buttons -->
+    <record id="view_base_payment_api_form_itau" model="ir.ui.view">
+        <field name="name">base.payment.api.form.itau</field>
+        <field name="model">base.payment.api</field>
+        <field name="inherit_id" ref="base_payment_api.view_base_payment_api_form"/>
+        <field name="arch" type="xml">
+            <button name="testar_token" position="after">
+                <!-- BOTÕES ESPECÍFICOS DO ITAÚ - COMENTADOS -->
+                <!--
+                <button name="action_test_post_boleto" type="object" string="Testar POST Boleto" 
+                        class="btn-warning" icon="fa-plus-square"
+                        invisible="integracao != 'itau_boleto'"/>
+                <button name="action_test_get_boleto" type="object" string="Testar GET Boleto" 
+                        class="btn-info" icon="fa-search"
+                        invisible="integracao != 'itau_boleto'"/>
+                -->
+            </button>
+        </field>
+    </record>
+
+    <!-- MENU ITEM COMENTADO - EVITA DUPLICAÇÃO -->
+    <!--
+    <menuitem id="menu_base_payment_itau"
+              name="Configurações Itaú"
+              parent="base_payment_api.menu_payment_configurations"
+              action="base_payment_api.action_base_payment_api"
+              sequence="20"/>
+    -->
+
+</odoo> 

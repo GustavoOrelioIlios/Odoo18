@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- List View (antigo Tree View) -->
+    <record id="view_base_payment_api_list" model="ir.ui.view">
+        <field name="name">base.payment.api.list</field>
+        <field name="model">base.payment.api</field>
+        <field name="arch" type="xml">
+            <list string="Configurações de API de Pagamento">
+                <field name="name"/>
+                <field name="bank_id"/>
+                <field name="integracao"/>
+                <field name="environment"/>
+                <field name="connection_status" widget="badge" 
+                       decoration-success="connection_status == 'success'"
+                       decoration-warning="connection_status == 'not_tested'"
+                       decoration-danger="connection_status == 'failed'"/>
+                <field name="last_connection_test"/>
+                <field name="active"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_base_payment_api_form" model="ir.ui.view">
+        <field name="name">base.payment.api.form</field>
+        <field name="model">base.payment.api</field>
+        <field name="arch" type="xml">
+            <form string="Configuração API de Pagamento">
+                <header>
+                    <button name="testar_token" type="object" string="Testar Token" 
+                            class="btn-primary" icon="fa-plug"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nome da Configuração"/>
+                        </h1>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="bank_id" options="{'no_create': True, 'no_create_edit': True}"/>
+                            <field name="integracao"/>
+                            <field name="environment"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="connection_status" widget="badge"
+                                   decoration-success="connection_status == 'success'"
+                                   decoration-warning="connection_status == 'not_tested'"
+                                   decoration-danger="connection_status == 'failed'"/>
+                            <field name="last_connection_test"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Configurações da API" name="api_config">
+                            <group>
+                                <group string="Autenticação">
+                                    <field name="base_url"/>
+                                    <field name="client_id"/>
+                                    <field name="client_secret" password="True"/>
+                                </group>
+                                <group string="Parâmetros de Conexão">
+                                    <field name="timeout"/>
+                                    <!-- COMENTADOS TEMPORARIAMENTE
+                                    <field name="retry_attempts"/>
+                                    <field name="debug_mode"/>
+                                    -->
+                                </group>
+                            </group>
+                        </page>
+                        
+                        <!-- ABA STATUS E LOGS - COMENTADA -->
+                        <!--
+                        <page string="Status e Logs" name="status_logs">
+                            <group>
+                                <group>
+                                    <field name="last_error_message" invisible="not last_error_message"/>
+                                    <field name="last_token" invisible="not last_token"/>
+                                </group>
+                            </group>
+                        </page>
+                        -->
+                        
+                        <page string="Descrição" name="description">
+                            <field name="description" placeholder="Descrição detalhada da configuração..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_base_payment_api_search" model="ir.ui.view">
+        <field name="name">base.payment.api.search</field>
+        <field name="model">base.payment.api</field>
+        <field name="arch" type="xml">
+            <search string="Configurações de API de Pagamento">
+                <field name="name"/>
+                <field name="bank_id"/>
+                <field name="integracao"/>
+                <filter string="Ativo" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Inativo" name="inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Sandbox" name="sandbox" domain="[('environment', '=', 'sandbox')]"/>
+                <filter string="Produção" name="production" domain="[('environment', '=', 'production')]"/>
+                <separator/>
+                <filter string="Conexão OK" name="connection_ok" domain="[('connection_status', '=', 'success')]"/>
+                <filter string="Conexão Falhou" name="connection_failed" domain="[('connection_status', '=', 'failed')]"/>
+                <filter string="Não Testado" name="not_tested" domain="[('connection_status', '=', 'not_tested')]"/>
+                <group expand="0" string="Agrupar Por">
+                    <filter string="Banco" name="group_bank" context="{'group_by': 'bank_id'}"/>
+                    <filter string="Integração" name="group_integration" context="{'group_by': 'integracao'}"/>
+                    <filter string="Ambiente" name="group_environment" context="{'group_by': 'environment'}"/>
+                    <filter string="Status" name="group_status" context="{'group_by': 'connection_status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_base_payment_api" model="ir.actions.act_window">
+        <field name="name">Configurações de API de Pagamento</field>
+        <field name="res_model">base.payment.api</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_base_payment_api_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crie sua primeira configuração de API de pagamento!
+            </p>
+            <p>
+                Configure as credenciais e parâmetros de conexão para integrar
+                com diferentes bancos e suas APIs de pagamento.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="menu_payment_integrations_root"
+              name="Integrações de Pagamento"
+              web_icon="base_payment_api,static/description/icon.png"
+              sequence="95"/>
+              
+    <menuitem id="menu_payment_configurations"
+              name="Configurações"
+              parent="menu_payment_integrations_root"
+              action="action_base_payment_api"
+              sequence="10"/>
+              
+    <!-- MENU APIS DE PAGAMENTO REMOVIDO - CONFIGURAÇÕES VAI DIRETO PARA A TELA -->
+    <!--
+    <menuitem id="menu_base_payment_api"
+              name="APIs de Pagamento"
+              parent="menu_payment_configurations"
+              action="action_base_payment_api"
+              sequence="10"/>
+    -->
+
+</odoo> 

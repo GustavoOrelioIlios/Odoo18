@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <!-- Demo Bank Data -->
+    <record id="bank_itau_demo" model="res.bank">
+        <field name="name">Banco Itaú Unibanco S.A.</field>
+        <field name="code">341</field>
+        <field name="country" ref="base.br"/>
+    </record>
+    
+    <!-- Demo Payment API Configuration - Será criado quando o módulo Itaú for instalado -->
+    <!--
+    <record id="payment_api_itau_demo" model="base.payment.api">
+        <field name="name">Configuração Demo - Itaú Sandbox</field>
+        <field name="bank_id" ref="bank_itau_demo"/>
+        <field name="integracao">itau_boleto</field>
+        <field name="environment">sandbox</field>
+        <field name="base_url">https://devportal.itau.com.br</field>
+        <field name="client_id">demo_client_id</field>
+        <field name="client_secret">demo_client_secret</field>
+        <field name="timeout">30</field>
+        <field name="retry_attempts">3</field>
+        <field name="debug_mode">True</field>
+        <field name="active">True</field>
+        <field name="description">Configuração de demonstração para testes com a API do Itaú no ambiente sandbox.</field>
+    </record>
+    -->
+    
+</odoo> 

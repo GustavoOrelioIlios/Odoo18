@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Form View for Test Result Wizard -->
+    <record id="view_payment_test_result_wizard_form" model="ir.ui.view">
+        <field name="name">payment.test.result.wizard.form</field>
+        <field name="model">payment.test.result.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Resultado do Teste">
+                <sheet>
+                    <div class="oe_title">
+                        <h2>
+                            <field name="title" readonly="1"/>
+                        </h2>
+                    </div>
+                    
+                    <div class="o_row" style="margin-bottom: 20px;">
+                        <field name="success" widget="badge" 
+                               decoration-success="success == True"
+                               decoration-danger="success == False"
+                               readonly="1"/>
+                    </div>
+                    
+                    <group string="Resposta da API">
+                        <field name="content" widget="text" readonly="1" nolabel="1"/>
+                    </group>
+                    
+                    <group string="Informações Adicionais" invisible="not extra_info">
+                        <field name="extra_info" widget="text" readonly="1" nolabel="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Fechar" type="object" name="action_close" class="btn-primary"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo> 
