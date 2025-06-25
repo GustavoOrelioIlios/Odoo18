@@ -24,14 +24,18 @@
     """,
     'depends': [
         'base_payment_api',
+        'contacts',
+        'account',
     ],
     'external_dependencies': {
-        'python': ['requests'],
+        'python': ['requests', 'pydantic'],
     },
     'data': [
         'security/ir.model.access.csv',
-        # 'data/migration_data.xml',
         'views/base_payment_itau_views.xml',
+        'views/res_partner_bank_views.xml',
+        'views/res_company_views.xml',
+        'views/account_move_views.xml',
     ],
     'installable': True,
     'application': False,

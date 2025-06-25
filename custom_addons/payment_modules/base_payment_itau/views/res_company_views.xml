@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Adiciona configurações Itaú na view de empresa -->
+        <record id="view_company_form_itau" model="ir.ui.view">
+            <field name="name">res.company.form.itau</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Adiciona nova página no notebook -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Configurações Itaú" name="itau_config">
+                        
+                        <group string="Configuração Itaú" col="2">
+                            <group>
+                                <field name="itau_payment_api_id" 
+                                       options="{'no_create': True, 'no_open': True}"
+                                       placeholder="Selecione uma configuração de API Itaú"/>
+                                
+                                <field name="itau_partner_bank_id" 
+                                       options="{'no_create': True, 'no_open': True}"
+                                       placeholder="Selecione a conta bancária Itaú"
+                                       context="{'default_partner_id': id}"/>
+                            </group>
+                            <group>
+                                <div class="alert alert-info" role="alert">
+                                    <strong>ℹ️ Como Configurar:</strong><br/>
+                                    <ol>
+                                        <li><strong>API Itaú:</strong> Credenciais da API</li>
+                                        <li><strong>Conta Bancária:</strong> Deve ter os dados Itaú preenchidos na aba "Configurações Itaú"</li>
+                                    </ol>
+                                    <br/>
+                                    <strong>📍 Para configurar a conta:</strong><br/>
+                                    Contatos → Esta Empresa → Contas Bancárias → [Conta Itaú] → Configurações Itaú
+                                </div>
+                            </group>
+                        </group>
+                        
+                    </page>
+                </xpath>
+                
+            </field>
+        </record>
+
+    </data>
+</odoo> 

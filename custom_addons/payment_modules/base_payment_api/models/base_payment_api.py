@@ -31,7 +31,7 @@ class BasePaymentAPI(models.Model):
     )
     
     integracao = fields.Selection(
-        selection='_get_integracao_selection',
+        selection=[],  # Será populado dinamicamente pelos módulos específicos
         string='Tipo de Integração', 
         required=True, 
         help='Tipo de integração de pagamento',
@@ -70,13 +70,6 @@ class BasePaymentAPI(models.Model):
         help='Tempo limite para requisições em segundos'
     )
     
-    # Additional Configuration - COMENTADOS TEMPORARIAMENTE
-    # debug_mode = fields.Boolean(
-    #     string='Modo Debug',
-    #     default=False,
-    #     help='Ativar logs detalhados'
-    # )
-    
     active = fields.Boolean(
         string='Ativo',
         default=True,
@@ -106,19 +99,6 @@ class BasePaymentAPI(models.Model):
         ('success', 'Sucesso'),
         ('failed', 'Falhou')
     ], string='Status da Conexão', default='not_tested', readonly=True, tracking=True)
-    
-    # CAMPOS DE DEBUG - COMENTADOS
-    # last_error_message = fields.Text(
-    #     string='Última Mensagem de Erro',
-    #     readonly=True,
-    #     help='Detalhes do último erro de conexão'
-    # )
-    # 
-    # last_token = fields.Text(
-    #     string='Último Token Gerado',
-    #     readonly=True,
-    #     help='Último token gerado (para debug)'
-    # )
 
     @api.constrains('timeout')
     def _check_timeout(self):
@@ -126,17 +106,6 @@ class BasePaymentAPI(models.Model):
             if record.timeout <= 0:
                 raise ValidationError(_('O timeout deve ser maior que zero'))
 
-    # CONSTRAINTS COMENTADOS TEMPORARIAMENTE
-    # @api.constrains('retry_attempts')
-    # def _check_retry_attempts(self):
-    #     for record in self:
-    #         if record.retry_attempts < 0:
-    #             raise ValidationError(_('O número de tentativas não pode ser negativo'))
-
-    @api.model
-    def _get_integracao_selection(self):
-        """Retorna as opções de integração disponíveis - será estendido pelos módulos específicos"""
-        return []
 
     def testar_token(self):
         """Método genérico para testar token - será sobrescrito pelos módulos específicos"""
@@ -157,8 +126,6 @@ class BasePaymentAPI(models.Model):
             'client_id': self.client_id,
             'client_secret': self.client_secret,
             'timeout': self.timeout,
-            # 'retry_attempts': self.retry_attempts,      # COMENTADO
-            # 'debug_mode': self.debug_mode,              # COMENTADO
             'environment': self.environment,
             'integracao': self.integracao,
         }
@@ -167,25 +134,11 @@ class BasePaymentAPI(models.Model):
         """Atualiza o status da conexão e registra no chatter"""
         self.ensure_one()
         
-        # CORREÇÃO TEMPORÁRIA: Ajustar data para 2024
-        from datetime import datetime, timedelta
-        current_time = fields.Datetime.now()
-        if current_time.year == 2025:
-            # Se estiver em 2025, subtrair 1 ano para corrigir
-            corrected_time = current_time.replace(year=2024)
-        else:
-            corrected_time = current_time
-            
-        self.last_connection_test = corrected_time
+        self.last_connection_test = fields.Datetime.now()
         self.connection_status = 'success' if success else 'failed'
-        # CAMPOS DE DEBUG COMENTADOS
-        # self.last_error_message = error_message if not success else False
-        # self.last_token = 'Token gerado com sucesso' if success else False
         
-        # FORÇA COMMIT DAS MUDANÇAS ANTES DO CHATTER
         self.env.cr.commit()
         
-        # REGISTRA NO CHATTER
         if success:
             self.message_post(
                 body="✅ Teste de conexão realizado com sucesso",
@@ -197,22 +150,4 @@ class BasePaymentAPI(models.Model):
                 message_type='notification'
             )
             
-        # FORÇA COMMIT DO CHATTER
         self.env.cr.commit()
-
-    # MODAL COMENTADO - NÃO EXIBIR MAIS MODAL NOS TESTES
-    # def _show_test_result(self, title, content, success, extra_info=None):
-    #     """Exibe modal com resultado do teste"""
-    #     return {
-    #         'type': 'ir.actions.act_window',
-    #         'name': title,
-    #         'res_model': 'payment.test.result.wizard',
-    #         'view_mode': 'form',
-    #         'target': 'new',
-    #         'context': {
-    #             'default_title': title,
-    #             'default_content': content,
-    #             'default_success': success,
-    #             'default_extra_info': extra_info or '',
-    #         }
-    #     } 

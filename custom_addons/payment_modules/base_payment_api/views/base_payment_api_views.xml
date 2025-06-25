@@ -65,25 +65,9 @@
                                 </group>
                                 <group string="Parâmetros de Conexão">
                                     <field name="timeout"/>
-                                    <!-- COMENTADOS TEMPORARIAMENTE
-                                    <field name="retry_attempts"/>
-                                    <field name="debug_mode"/>
-                                    -->
                                 </group>
                             </group>
                         </page>
-                        
-                        <!-- ABA STATUS E LOGS - COMENTADA -->
-                        <!--
-                        <page string="Status e Logs" name="status_logs">
-                            <group>
-                                <group>
-                                    <field name="last_error_message" invisible="not last_error_message"/>
-                                    <field name="last_token" invisible="not last_token"/>
-                                </group>
-                            </group>
-                        </page>
-                        -->
                         
                         <page string="Descrição" name="description">
                             <field name="description" placeholder="Descrição detalhada da configuração..."/>
@@ -151,14 +135,5 @@
               parent="menu_payment_integrations_root"
               action="action_base_payment_api"
               sequence="10"/>
-              
-    <!-- MENU APIS DE PAGAMENTO REMOVIDO - CONFIGURAÇÕES VAI DIRETO PARA A TELA -->
-    <!--
-    <menuitem id="menu_base_payment_api"
-              name="APIs de Pagamento"
-              parent="menu_payment_configurations"
-              action="action_base_payment_api"
-              sequence="10"/>
-    -->
 
 </odoo> 

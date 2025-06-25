@@ -33,9 +33,6 @@
         'views/base_payment_api_views.xml',
         'views/payment_test_result_wizard_views.xml',
     ],
-    # 'demo': [
-    #     'data/demo_data.xml',
-    # ],
     'installable': True,
     'application': True,
     'auto_install': False,

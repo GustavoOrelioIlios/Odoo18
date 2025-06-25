@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- Adiciona botão "Emitir Boleto Itaú" na view de fatura -->
+        <record id="view_move_form_itau_boleto" model="ir.ui.view">
+            <field name="name">account.move.form.itau.boleto</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Adiciona o botão no header, após os botões existentes -->
+                <xpath expr="//header/button[@name='action_post']" position="after">
+                    <button name="action_emitir_boleto_itau" 
+                            type="object" 
+                            string="🎫 Emitir Boleto Itaú" 
+                            class="btn-primary" 
+                            invisible="state != 'posted' or move_type not in ['out_invoice', 'out_refund']"
+                            groups="account.group_account_invoice"/>
+                </xpath>
+                
+                <!-- Adicionar aba "Boleto Itaú" -->
+                <notebook position="inside">
+                    <page string="Boleto Itaú" 
+                          name="itau_boleto_tab"
+                          invisible="move_type not in ('out_invoice', 'out_refund')">
+                        
+                        <group string="📊 Status da Emissão" col="4">
+                            <field name="itau_boleto_status" widget="badge" 
+                                   decoration-success="itau_boleto_status == 'success'"
+                                   decoration-danger="itau_boleto_status == 'error'"
+                                   decoration-muted="itau_boleto_status == 'none'"/>
+                            <field name="itau_boleto_date"/>
+                            <button name="action_emitir_boleto_itau" 
+                                    string="🔄 Reemitir Boleto" 
+                                    type="object" 
+                                    class="btn-secondary"
+                                    invisible="state != 'posted'"
+                                    help="Clique para emitir ou reemitir o boleto Itaú"/>
+                        </group>
+                        
+                        <!-- Mensagem de erro, se houver -->
+                        <group string="⚠️ Erro na Emissão" invisible="not itau_boleto_error_message">
+                            <field name="itau_boleto_error_message" nolabel="1" 
+                                   widget="text" readonly="1"
+                                   style="color: #dc3545; font-family: monospace; background: #f8d7da; padding: 10px; border-radius: 5px;"/>
+                        </group>
+                        
+                        <!-- Seção de JSONs -->
+                        <group string="📋 Dados da Comunicação com API" invisible="not itau_boleto_json_request and not itau_boleto_json_response">
+                            
+                            <!-- Subsection para Request -->
+                            <group string="📤 JSON Enviado (Request)" col="1" invisible="not itau_boleto_json_request">
+                                <field name="itau_boleto_request_formatted" nolabel="1" 
+                                       widget="html" readonly="1"/>
+                            </group>
+                            
+                            <!-- Subsection para Response -->
+                            <group string="📥 JSON Recebido (Response)" col="1" invisible="not itau_boleto_json_response">
+                                <field name="itau_boleto_response_formatted" nolabel="1" 
+                                       widget="html" readonly="1"/>
+                            </group>
+                            
+                        </group>
+                        
+                        <!-- Instruções caso ainda não tenha sido emitido -->
+                        <div invisible="itau_boleto_status != 'none'" 
+                             style="text-align: center; padding: 40px; color: #6c757d;">
+                            <h3 style="color: #6c757d;">🎫 Emissão de Boleto Itaú</h3>
+                            <p>Esta fatura ainda não possui boleto emitido.</p>
+                            <p>Para emitir um boleto, clique no botão "🎫 Emitir Boleto Itaú" no cabeçalho da fatura.</p>
+                            <hr style="margin: 20px 0; border: 1px solid #dee2e6;"/>
+                            <small><strong>Requisitos:</strong></small><br/>
+                            <small>• Fatura deve estar confirmada (estado "Lançada")</small><br/>
+                            <small>• Empresa deve ter configuração de API Itaú</small><br/>
+                            <small>• Empresa deve ter conta bancária Itaú configurada</small>
+                        </div>
+                        
+                    </page>
+                </notebook>
+            </field>
+        </record>
+
+    </data>
+</odoo> 
