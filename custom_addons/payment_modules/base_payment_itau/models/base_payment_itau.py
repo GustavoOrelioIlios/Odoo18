@@ -164,10 +164,10 @@ class BasePaymentItau(models.Model):
             'dado_boleto': {
                 'pagador': pagador_data,
                 'dados_individuais_boleto': boleto_data.get('dados_individuais_boleto', []),
-                'codigo_especie': boleto_data.get('codigo_especie', '01'),
+                'codigo_especie': boleto_data.get('codigo_especie'),
                 'descricao_instrumento_cobranca': 'boleto',
                 'tipo_boleto': boleto_data.get('tipo_boleto', 'proposta'),
-                'codigo_carteira': boleto_data.get('codigo_carteira', '112'),
+                'codigo_carteira': boleto_data.get('codigo_carteira'),
                 'codigo_aceite': boleto_data.get('codigo_aceite', 'S'),
                 'data_emissao': boleto_data.get('data_emissao', datetime.now().strftime("%Y-%m-%d"))
             },
@@ -253,7 +253,7 @@ class BasePaymentItau(models.Model):
                             "texto_uso_beneficiario": "abc123abc123abc123"
                         }
                     ],
-                    "codigo_especie": "01",
+                    "codigo_especie": "00",  # ATENÇÃO: Altere para o código correto da espécie
                     "descricao_instrumento_cobranca": "boleto",
                     "tipo_boleto": "proposta",
                     "forma_envio": "impressão",
@@ -298,7 +298,7 @@ class BasePaymentItau(models.Model):
                         },
                         "exclusao_sacador_avalista": True
                     },
-                    "codigo_carteira": "112",
+                    "codigo_carteira": "000",  # ATENÇÃO: Altere para o código correto da sua carteira
                     "codigo_tipo_vencimento": 1,
                     "descricao_especie": "BDP Boleto proposta",
                     "codigo_aceite": "S",
@@ -536,18 +536,22 @@ class BasePaymentItau(models.Model):
         # Gera token OAuth2
         token, _ = self._get_oauth_token()
         
-        # Monta payload completo
+        # Monta payload completo com estrutura corrigida
         payload = {
             'beneficiario': beneficiario_data,
             'dado_boleto': {
-                'pagador': pagador_data,
-                'dados_individuais_boleto': boleto_data.get('dados_individuais_boleto', []),
-                'codigo_especie': boleto_data.get('codigo_especie', '01'),
-                'descricao_instrumento_cobranca': 'boleto',
-                'tipo_boleto': boleto_data.get('tipo_boleto', 'proposta'),
-                'codigo_carteira': boleto_data.get('codigo_carteira', '112'),
+                'codigo_carteira': boleto_data.get('codigo_carteira'),
+                'codigo_especie': boleto_data.get('codigo_especie'),
+                'descricao_especie': boleto_data.get('descricao_especie', ''),  # CAMPO ADICIONADO
+                'descricao_instrumento_cobranca': boleto_data.get('descricao_instrumento_cobranca', 'boleto'),  # CAMPO ADICIONADO
                 'codigo_aceite': boleto_data.get('codigo_aceite', 'S'),
-                'data_emissao': boleto_data.get('data_emissao', datetime.now().strftime("%Y-%m-%d"))
+                'tipo_boleto': boleto_data.get('tipo_boleto', 'proposta'),
+                'data_emissao': boleto_data.get('data_emissao', datetime.now().strftime("%Y-%m-%d")),
+                
+
+                
+                'pagador': pagador_data,  # Estrutura já corrigida no account_move.py
+                'dados_individuais_boleto': boleto_data.get('dados_individuais_boleto', []),
             },
             'etapa_processo_boleto': 'validacao',
             'codigo_canal_operacao': 'BKL'
@@ -578,11 +582,13 @@ class BasePaymentItau(models.Model):
         
         # Log no chatter
         if response.status_code in [200, 201]:
+            # CORREÇÃO: Acessa nome na estrutura aninhada
+            cliente_nome = pagador_data.get('pessoa', {}).get('nome_pessoa', 'N/A')
             self.message_post(
                 body=f"✅ Boleto emitido com sucesso via fatura<br/>"
                      f"Status: {response.status_code}<br/>"
                      f"Correlation ID: {correlation_id}<br/>"
-                     f"Cliente: {pagador_data.get('nome_pagador', 'N/A')}",
+                     f"Cliente: {cliente_nome}",
                 message_type='notification'
             )
             return response.json()

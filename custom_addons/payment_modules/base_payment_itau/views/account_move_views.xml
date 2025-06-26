@@ -31,6 +31,7 @@
                                    decoration-danger="itau_boleto_status == 'error'"
                                    decoration-muted="itau_boleto_status == 'none'"/>
                             <field name="itau_boleto_date"/>
+                            <field name="l10n_br_is_own_number"/>
                             <button name="action_emitir_boleto_itau" 
                                     string="🔄 Reemitir Boleto" 
                                     type="object" 
@@ -38,6 +39,7 @@
                                     invisible="state != 'posted'"
                                     help="Clique para emitir ou reemitir o boleto Itaú"/>
                         </group>
+                        
                         
                         <!-- Mensagem de erro, se houver -->
                         <group string="⚠️ Erro na Emissão" invisible="not itau_boleto_error_message">
@@ -61,6 +63,19 @@
                                        widget="html" readonly="1"/>
                             </group>
                             
+                        </group>
+                        
+                        <!-- Seção de Boletos Gerados -->
+                        <group string="📋 Boletos Gerados" invisible="not boleto_ids">
+                            <field name="boleto_ids" nolabel="1">
+                                <list string="Boletos">
+                                    <field name="itau_boleto_id"/>
+                                    <field name="data_emissao"/>
+                                    <field name="data_limite_pagamento"/>
+                                    <field name="l10n_br_is_barcode"/>
+                                    <field name="l10n_br_is_barcode_formatted"/>
+                                </list>
+                            </field>
                         </group>
                         
                         <!-- Instruções caso ainda não tenha sido emitido -->

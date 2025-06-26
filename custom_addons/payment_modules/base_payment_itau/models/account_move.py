@@ -4,6 +4,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
 import json
+import uuid
 
 # Importação dos modelos Pydantic para validação
 from .pydantic_models import ValidadorBoleto, ValidadorBeneficiario
@@ -55,6 +56,24 @@ class AccountMove(models.Model):
         compute='_compute_itau_boleto_formatted',
         help='JSON de resposta formatado para exibição'
     )
+    
+    # NOVO CAMPO - Nosso Número
+    l10n_br_is_own_number = fields.Char(
+        string='Nosso Número',
+        copy=False,
+        readonly=True,
+        help="Nosso Número gerado para o boleto Itaú."
+    )
+    
+    # NOVO CAMPO - Relacionamento com boletos
+    boleto_ids = fields.One2many(
+        'move.boleto',
+        'invoice_id',
+        string='Boletos Bancários',
+        help="Boletos bancários gerados para esta fatura"
+    )
+    
+
     
     @api.depends('itau_boleto_json_request', 'itau_boleto_json_response')
     def _compute_itau_boleto_formatted(self):
@@ -169,13 +188,16 @@ class AccountMove(models.Model):
                 'itau_boleto_error_message': False,
             })
             
+            # --- ETAPA 2: PROCESSAR A RESPOSTA E CRIAR O REGISTRO MOVE.BOLETO ---
+            self._create_boleto_record_from_api_response()
+            
             # Notificação de sucesso na tela
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': _('✅ Boleto Emitido!'),
-                    'message': _('Boleto Itaú emitido com sucesso. Verifique os detalhes na aba "Boleto Itaú".'),
+                    'title': _('✅ Boleto Emitido e Registrado!'),
+                    'message': _('Boleto Itaú emitido com sucesso e registro criado. Verifique os detalhes na aba "Boleto Itaú".'),
                     'type': 'success',
                     'sticky': False,
                 }
@@ -205,7 +227,7 @@ class AccountMove(models.Model):
     
     def _get_pagador_data_from_invoice(self):
         """
-        Extrai dados do pagador (cliente) da fatura
+        Extrai dados do pagador (cliente) da fatura com estrutura aninhada conforme API Itaú
         """
         partner = self.partner_id
         
@@ -216,47 +238,172 @@ class AccountMove(models.Model):
             if endereco_faturamento:
                 endereco_cobranca = endereco_faturamento[0]
         
+        # ESTRUTURA CORRIGIDA: Objeto aninhado conforme API Itaú
         pagador_data = {
-            'nome_pagador': partner.name or '',
-            'logradouro': endereco_cobranca.street or '',
-            'bairro': endereco_cobranca.street2 or '',
-            'cidade': endereco_cobranca.city or '',
-            'uf': endereco_cobranca.state_id.code if endereco_cobranca.state_id else '',
-            'cep': endereco_cobranca.zip or '',
-            'telefone': partner.phone or partner.mobile or '',
-            'email': partner.email or '',
+            'pessoa': {
+                'nome_pessoa': partner.name or '',
+                'nome_fantasia': partner.name or '',  # Pode usar o mesmo nome ou um campo diferente se existir
+                'tipo_pessoa': {
+                    'codigo_tipo_pessoa': 'J' if partner.is_company else 'F',
+                }
+            },
+            'endereco': {
+                'nome_logradouro': f"{endereco_cobranca.street or ''}, {getattr(endereco_cobranca, 'l10n_br_number', '') or ''}",
+                'nome_bairro': getattr(endereco_cobranca, 'l10n_br_district', '') or endereco_cobranca.street2 or '',
+                'nome_cidade': endereco_cobranca.city or '',
+                'sigla_UF': endereco_cobranca.state_id.code if endereco_cobranca.state_id else '',
+                'numero_CEP': endereco_cobranca.zip or ''
+            },
+            'texto_endereco_email': partner.email or ''
         }
         
-        # Adiciona documento (CPF/CNPJ)
+        # Adiciona documento (CPF/CNPJ) na estrutura correta
         if partner.vat:
             if partner.is_company:
-                pagador_data['cnpj'] = partner.vat
+                pagador_data['pessoa']['tipo_pessoa']['numero_cadastro_nacional_pessoa_juridica'] = partner.vat
             else:
-                pagador_data['cpf'] = partner.vat
+                pagador_data['pessoa']['tipo_pessoa']['numero_cadastro_pessoa_fisica'] = partner.vat
         
         return pagador_data
     
     def _get_boleto_data_from_invoice(self):
         """
-        Extrai dados específicos do boleto da fatura
+        Extrai dados específicos do boleto da fatura com campos adicionais
         """
+        # --- CORREÇÃO: Pega configurações do diário do banco destinatário ---
+        if not self.partner_bank_id:
+            raise UserError(_("O campo 'Banco Destinatário' é obrigatório para emitir um boleto."))
+        
+        journal = self.partner_bank_id.journal_id
+        if not journal:
+            raise UserError(_("A conta bancária selecionada não está associada a um Diário. Verifique a configuração em 'Faturamento > Configuração > Contas Bancárias'."))
+        
+        # Pega o código da carteira do diário correto - obrigatório
+        codigo_carteira = journal.itau_wallet_code
+        if not codigo_carteira:
+            raise UserError(_('O campo "Código da Carteira de Cobrança (Itaú)" deve ser preenchido no diário %s') % journal.name)
+        
+        # Pega o código da espécie do diário correto - obrigatório
+        codigo_especie = journal.l10n_br_is_payment_mode_id
+        if not codigo_especie:
+            raise UserError(_('O campo "Código da Espécie do Título (Itaú)" deve ser preenchido no diário %s') % journal.name)
+        
+        # Gera ou busca o "Nosso Número" se não existir
+        if not self.l10n_br_is_own_number:
+            own_number = self.env['ir.sequence'].next_by_code('itau.nosso.numero')
+            self.write({'l10n_br_is_own_number': own_number})
+        
+        # Busca ou cria o registro move.boleto
+        boleto_record = self.env['move.boleto'].search([('invoice_id', '=', self.id)], limit=1)
+        if not boleto_record:
+            boleto_record = self.env['move.boleto'].create({'invoice_id': self.id})
+        
         boleto_data = {
+            'codigo_carteira': codigo_carteira,
+            'codigo_especie': codigo_especie,
+            'descricao_especie': journal.l10n_br_is_payment_mode_description or '',  # CAMPO ADICIONADO
+            'descricao_instrumento_cobranca': 'boleto',  # CAMPO ADICIONADO
+            'codigo_aceite': 'S',
+            'tipo_boleto': 'proposta',
+            'data_emissao': fields.Date.context_today(self).strftime('%Y-%m-%d'),
+            
+
+            
             'dados_individuais_boleto': [{
-                'valor_titulo': str(self.amount_total),
-                'id_boleto_individual': f"inv-{self.id}-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                'situacao_geral_boleto': 'Em Aberto',
-                'status_vencimento': 'a vencer',
-                'numero_nosso_numero': f"{self.id:08d}",
-                'data_vencimento': self.invoice_date_due.strftime('%Y-%m-%d') if self.invoice_date_due else datetime.now().strftime('%Y-%m-%d'),
+                'valor_titulo': f"{self.amount_total:.2f}",
+                'data_vencimento': self.invoice_date_due.strftime('%Y-%m-%d') if self.invoice_date_due else fields.Date.context_today(self).strftime('%Y-%m-%d'),
+                'data_limite_pagamento': self.invoice_date_due.strftime('%Y-%m-%d') if self.invoice_date_due else fields.Date.context_today(self).strftime('%Y-%m-%d'),  # CAMPO ADICIONADO
+                'id_boleto_individual': boleto_record.itau_boleto_id or str(uuid.uuid4()),
+                'numero_nosso_numero': self.l10n_br_is_own_number,
                 'texto_seu_numero': self.name or '',
-                'data_limite_pagamento': self.invoice_date_due.strftime('%Y-%m-%d') if self.invoice_date_due else datetime.now().strftime('%Y-%m-%d'),
                 'texto_uso_beneficiario': f"Fatura {self.name}" if self.name else 'Fatura',
             }],
-            'codigo_especie': '01',
-            'tipo_boleto': 'proposta',
-            'codigo_carteira': '112',
-            'codigo_aceite': 'S',
-            'data_emissao': self.invoice_date.strftime('%Y-%m-%d') if self.invoice_date else datetime.now().strftime('%Y-%m-%d')
         }
         
-        return boleto_data 
+        return boleto_data
+    
+    def _create_boleto_record_from_api_response(self):
+        """
+        Processa a resposta da API do Itaú e cria o registro move.boleto
+        """
+        self.ensure_one()
+        
+        # Verifica se há uma resposta JSON válida
+        if not self.itau_boleto_json_response:
+            raise UserError(_("A resposta da API (JSON Recebido) está vazia. Não é possível registrar o boleto."))
+
+        try:
+            response_data = json.loads(self.itau_boleto_json_response)
+        except json.JSONDecodeError:
+            raise UserError(_("Erro: Não foi possível decodificar a resposta JSON da API."))
+        
+        # Verifica se a resposta indica sucesso
+        if response_data.get('etapa_processo_boleto') == 'efetivacao':
+            
+            # Gera o "Nosso Número" se ainda não existir
+            if not self.l10n_br_is_own_number:
+                own_number = self.env['ir.sequence'].next_by_code('itau.nosso.numero')
+                self.write({'l10n_br_is_own_number': own_number})
+
+            # Extrai dados do boleto da resposta
+            dados_boleto_individual = response_data.get('dados_individuais_boleto', [{}])[0]
+
+            # Prepara os valores para criação do registro move.boleto
+            boleto_vals = {
+                'invoice_id': self.id,
+                'l10n_br_is_barcode': dados_boleto_individual.get('codigo_barras', ''),
+                'l10n_br_is_barcode_formatted': dados_boleto_individual.get('numero_linha_digitavel', ''),
+                'data_limite_pagamento': dados_boleto_individual.get('data_limite_pagamento') or self.invoice_date_due,
+                # A data de emissão já tem default no modelo, então não é obrigatória aqui
+            }
+            
+            # Lógica para o ID do Boleto no Itaú: Prioriza API, fallback para UUID
+            api_boleto_id = response_data.get('id_boleto')
+            if api_boleto_id and api_boleto_id.strip():
+                # Se a API retornou um ID válido, usar esse valor
+                boleto_vals['itau_boleto_id'] = api_boleto_id.strip()
+            else:
+                # Se a API não retornou ID, gerar UUID como fallback
+                boleto_vals['itau_boleto_id'] = str(uuid.uuid4())
+
+            # Verifica se já existe um boleto para esta fatura
+            existing_boleto = self.env['move.boleto'].search([('invoice_id', '=', self.id)], limit=1)
+            
+            if existing_boleto:
+                # Atualiza o boleto existente
+                existing_boleto.write(boleto_vals)
+            else:
+                # Cria um novo registro
+                self.env['move.boleto'].create(boleto_vals)
+                
+        else:
+            # Caso a API retorne um erro ou status inesperado
+            mensagem_erro = response_data.get('mensagem_retorno', 'Erro desconhecido retornado pela API.')
+            raise UserError(_("Falha ao registrar boleto no Itaú: %s") % mensagem_erro)
+    
+    def action_generate_itau_boleto(self):
+        """
+        Gera o boleto Itaú para a fatura, criando o "Nosso Número" e o registro move.boleto
+        """
+        for move in self:
+            # --- VALIDAÇÕES INICIAIS ---
+            if not move.partner_bank_id:
+                raise UserError(_("O campo 'Banco Destinatário' é obrigatório para emitir um boleto."))
+            
+            journal = move.partner_bank_id.journal_id
+            if not journal:
+                raise UserError(_("A conta bancária selecionada não está associada a um Diário. Verifique a configuração do Banco Destinatário."))
+            
+            # Validações das configurações do diário correto
+            if not journal.itau_wallet_code:
+                raise UserError(_("Configure o 'Código da Carteira' no diário do banco (%s).") % journal.name)
+            if not journal.l10n_br_is_payment_mode_id:
+                raise UserError(_("Configure a 'Espécie do Título' no diário do banco (%s).") % journal.name)
+            
+            if not move.l10n_br_is_own_number:
+                own_number = self.env['ir.sequence'].next_by_code('itau.nosso.numero')
+                move.write({'l10n_br_is_own_number': own_number})
+            
+            # Chama a função principal de emissão de boleto
+            move.action_emitir_boleto_itau()
+        return True 

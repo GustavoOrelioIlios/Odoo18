@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_journal_form_itau" model="ir.ui.view">
+        <field name="name">account.journal.form.itau.inherit</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form"/>
+        <field name="arch" type="xml">
+            <!-- Criar nova aba "Configurações Integração" -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Configurações Integração" name="integration_settings">
+                    <group>
+                        <group string="Configurações de Boleto (Itaú)">
+                            <field name="itau_wallet_code"/>
+                            <field name="l10n_br_is_payment_mode_id"/>
+                            <field name="l10n_br_is_payment_mode_description" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo> 

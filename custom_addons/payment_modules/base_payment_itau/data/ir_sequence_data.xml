@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="seq_itau_own_number" model="ir.sequence">
+            <field name="name">Itaú Nosso Número Sequence</field>
+            <field name="code">itau.nosso.numero</field>
+            <field name="prefix"></field>
+            <field name="padding">8</field>
+            <field name="company_id" eval="False"/>
+        </record>
+    </data>
+</odoo> 

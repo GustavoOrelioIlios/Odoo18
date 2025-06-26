@@ -316,82 +316,56 @@ class PydanticI18nPtBr:
 
 
 # Mantendo modelos antigos para compatibilidade temporária
-class PagadorModel(BaseModel):
-    """Modelo para validação de dados do pagador"""
+class PagadorPessoaModel(BaseModel):
+    """Modelo para dados da pessoa do pagador (estrutura aninhada)"""
     
-    nome_pagador: str = Field(
+    nome_pessoa: str = Field(
         ..., 
         min_length=3,
         max_length=100,
-        description="Nome completo do pagador"
+        description="Nome completo da pessoa"
     )
-    cpf: Optional[str] = Field(
+    nome_fantasia: Optional[str] = Field(
         None,
-        pattern=r'^\d{11}$',
-        description="CPF apenas números (11 dígitos)"
+        max_length=100,
+        description="Nome fantasia (pode ser igual ao nome_pessoa)"
     )
-    cnpj: Optional[str] = Field(
-        None,
-        pattern=r'^\d{14}$',
-        description="CNPJ apenas números (14 dígitos)"
+    tipo_pessoa: TipoPessoaModel = Field(
+        ...,
+        description="Dados do tipo de pessoa e documentos"
     )
-    telefone: Optional[str] = Field(
-        None,
-        min_length=10,
-        max_length=15,
-        pattern=r'^\d{10,15}$',
-        description="Telefone apenas números (10 a 15 dígitos)"
+    
+    model_config = ConfigDict(
+        validate_assignment=True,
+        str_strip_whitespace=True
     )
-    email: Optional[str] = Field(
+
+
+class PagadorModel(BaseModel):
+    """Modelo para validação de dados do pagador (estrutura aninhada conforme API Itaú)"""
+    
+    pessoa: PagadorPessoaModel = Field(
+        ...,
+        description="Dados da pessoa do pagador"
+    )
+    endereco: EnderecoModel = Field(
+        ...,
+        description="Dados do endereço do pagador"
+    )
+    texto_endereco_email: Optional[str] = Field(
         None,
         max_length=100,
         pattern=r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
         description="Email válido"
     )
     
-    # Campos de endereço usando modelo separado
-    logradouro: str = Field(..., min_length=5, max_length=200)
-    bairro: str = Field(..., min_length=2, max_length=100)
-    cidade: str = Field(..., min_length=2, max_length=100)
-    uf: str = Field(..., min_length=2, max_length=2, pattern=r'^[A-Z]{2}$')
-    cep: str = Field(..., pattern=r'^\d{5}-?\d{3}$')
-    
-    @field_validator('cpf', 'cnpj')
-    @classmethod
-    def validar_documento(cls, v, info):
-        """Valida CPF ou CNPJ"""
-        if not v:
-            return v
-            
-        # Remove formatação
-        v = re.sub(r'[^\d]', '', v)
-        
-        if info.field_name == 'cpf' and len(v) != 11:
-            raise ValueError('CPF deve ter 11 dígitos')
-        elif info.field_name == 'cnpj' and len(v) != 14:
-            raise ValueError('CNPJ deve ter 14 dígitos')
-            
-        return v
-    
-    @field_validator('email')
+    @field_validator('texto_endereco_email')
     @classmethod
     def validar_email(cls, v):
         """Validação adicional de email"""
         if v and len(v) > 100:
             raise ValueError('Email muito longo (máximo 100 caracteres)')
         return v
-    
-    @field_validator('cep')
-    @classmethod
-    def validar_cep_pagador(cls, v):
-        """Remove hífen do CEP se presente"""
-        return v.replace('-', '') if v else v
-    
-    @field_validator('uf')
-    @classmethod
-    def validar_uf_pagador(cls, v):
-        """Converte UF para maiúsculo"""
-        return v.upper() if v else v
     
     model_config = ConfigDict(
         validate_assignment=True,
@@ -554,36 +528,49 @@ class BoletoIndividualModel(BaseModel):
 
 
 class BoletoModel(BaseModel):
-    """Modelo principal para validação completa do boleto"""
+    """Modelo principal para validação completa do boleto com campos adicionais"""
     
-    dados_individuais_boleto: List[BoletoIndividualModel] = Field(
+    codigo_carteira: str = Field(
         ...,
-        min_length=1,
-        description="Lista de boletos individuais"
+        pattern=r'^\d{3}$',
+        description="Código da carteira (3 dígitos) - OBRIGATÓRIO"
     )
     codigo_especie: str = Field(
-        default="01",
+        ...,
         pattern=r'^\d{2}$',
-        description="Código da espécie (2 dígitos)"
+        description="Código da espécie (2 dígitos) - OBRIGATÓRIO"
     )
-    tipo_boleto: str = Field(
-        default="proposta",
-        description="Tipo do boleto"
+    descricao_especie: Optional[str] = Field(
+        None,
+        max_length=100,
+        description="Descrição da espécie do título"
     )
-    codigo_carteira: str = Field(
-        default="112",
-        pattern=r'^\d{3}$',
-        description="Código da carteira (3 dígitos)"
+    descricao_instrumento_cobranca: Optional[str] = Field(
+        None,
+        max_length=50,
+        description="Descrição do instrumento de cobrança (ex: 'boleto')"
     )
     codigo_aceite: str = Field(
         default="S",
         pattern=r'^[SN]$',
         description="Código de aceite (S ou N)"
     )
+    tipo_boleto: str = Field(
+        default="proposta",
+        description="Tipo do boleto"
+    )
     data_emissao: str = Field(
         ...,
         pattern=r'^\d{4}-\d{2}-\d{2}$',
         description="Data de emissão no formato YYYY-MM-DD"
+    )
+    
+
+    
+    dados_individuais_boleto: List[BoletoIndividualModel] = Field(
+        ...,
+        min_length=1,
+        description="Lista de boletos individuais"
     )
     
     @field_validator('data_emissao')
@@ -595,6 +582,8 @@ class BoletoModel(BaseModel):
             return v
         except ValueError:
             raise ValueError('Data de emissão deve estar no formato YYYY-MM-DD')
+    
+
     
     model_config = ConfigDict(
         validate_assignment=True,
