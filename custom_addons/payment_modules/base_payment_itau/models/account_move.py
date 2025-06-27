@@ -221,7 +221,7 @@ class AccountMove(models.Model):
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': _('❌ Erro na Emissão'),
+                    'title': _('Erro na Emissão'),
                     'message': _('Falha ao emitir boleto. Verifique os detalhes na aba "Boleto Itaú".'),
                     'type': 'danger',
                     'sticky': True,
@@ -262,47 +262,35 @@ class AccountMove(models.Model):
         if self.partner_bank_id and self.partner_bank_id.journal_id:
             journal = self.partner_bank_id.journal_id
         
-        # 🚨 DEBUG LOG TEMPORÁRIO
-        _logger.info("🔍 DEBUG - Partner: %s | Partner Bank: %s | Journal: %s", 
-                     self.partner_id.name, 
-                     self.partner_bank_id.display_name if self.partner_bank_id else 'None',
-                     journal.name if journal else 'None')
+
         
         # === JUROS ===
         # Prioridade 1: Cliente
         if self.partner_id.payment_interest_code:
-            _logger.info("🔍 DEBUG - Usando JUROS do CLIENTE: %s", self.partner_id.payment_interest_code)
             result['interest']['code'] = self.partner_id.payment_interest_code
             result['interest']['percent'] = self.partner_id.payment_interest_percent
             result['interest']['value'] = self.partner_id.payment_interest_value
             result['interest']['date_start'] = self.partner_id.payment_interest_date_start
         # Prioridade 2: Diário (fallback)
         elif journal and journal.payment_interest_code:
-            _logger.info("🔍 DEBUG - Usando JUROS do DIÁRIO: %s", journal.payment_interest_code)
             result['interest']['code'] = journal.payment_interest_code
             result['interest']['percent'] = journal.payment_interest_percent
             result['interest']['value'] = journal.payment_interest_value
             result['interest']['date_start'] = journal.payment_interest_date_start
-        else:
-            _logger.info("🔍 DEBUG - JUROS não encontrado nem no cliente nem no diário")
         
         # === MULTA ===
         # Prioridade 1: Cliente
         if self.partner_id.payment_penalty_code:
-            _logger.info("🔍 DEBUG - Usando MULTA do CLIENTE: %s", self.partner_id.payment_penalty_code)
             result['penalty']['code'] = self.partner_id.payment_penalty_code
             result['penalty']['percent'] = self.partner_id.payment_penalty_percent
             result['penalty']['value'] = self.partner_id.payment_penalty_value
             result['penalty']['date_start'] = self.partner_id.payment_penalty_date_start
         # Prioridade 2: Diário (fallback)
         elif journal and journal.payment_penalty_code:
-            _logger.info("🔍 DEBUG - Usando MULTA do DIÁRIO: %s", journal.payment_penalty_code)
             result['penalty']['code'] = journal.payment_penalty_code
             result['penalty']['percent'] = journal.payment_penalty_percent
             result['penalty']['value'] = journal.payment_penalty_value
             result['penalty']['date_start'] = journal.payment_penalty_date_start
-        else:
-            _logger.info("🔍 DEBUG - MULTA não encontrada nem no cliente nem no diário")
         
         return result
     
@@ -325,20 +313,12 @@ class AccountMove(models.Model):
         
         # === NOVA LÓGICA: Usa sistema de múltiplos descontos ===
         if hasattr(payment_term, 'discount_line_ids') and payment_term.discount_line_ids:
-            _logger.info("🔍 DEBUG - Usando NOVO sistema de descontos: %d linhas encontradas", 
-                         len(payment_term.discount_line_ids))
-            
             # Usa o método do termo de pagamento para gerar estrutura
             discount_data = payment_term.get_itau_discount_data(self.invoice_date)
-            
-            if discount_data:
-                _logger.info("🔍 DEBUG - Estrutura de desconto gerada: %s", discount_data)
-            
             return discount_data
         
         # === LÓGICA ANTIGA: Compatibilidade com sistema original ===
         else:
-            _logger.info("🔍 DEBUG - Usando sistema ANTIGO de descontos (compatibilidade)")
             
             # Obtém linhas do termo de pagamento que são descontos (sistema original)
             payment_term_lines = payment_term.line_ids.filtered(
@@ -454,14 +434,8 @@ class AccountMove(models.Model):
         # === OBTÉM INFORMAÇÕES DE JUROS E MULTA ===
         interest_penalty_info = self._get_payment_interest_penalty_info()
         
-        # 🚨 DEBUG LOG TEMPORÁRIO
-        _logger.info("🔍 DEBUG - Interest/Penalty Info: %s", interest_penalty_info)
-        
         # === OBTÉM INFORMAÇÕES DE DESCONTO ===
         discount_info = self._get_discount_info_from_payment_terms()
-        
-        # 🚨 DEBUG LOG TEMPORÁRIO
-        _logger.info("🔍 DEBUG - Discount Info: %s", discount_info)
         
         boleto_data = {
             'codigo_carteira': codigo_carteira,
@@ -485,8 +459,6 @@ class AccountMove(models.Model):
         
         # === ADICIONA INFORMAÇÕES DE JUROS (SE CONFIGURADO) ===
         if interest_penalty_info['interest']['code'] and interest_penalty_info['interest']['code'] != '05':  # Não é isento
-            # 🚨 DEBUG LOG TEMPORÁRIO
-            _logger.info("🔍 DEBUG - Adicionando JUROS ao boleto_data")
             
             from datetime import timedelta
             data_inicio_juros = self.invoice_date_due + timedelta(days=interest_penalty_info['interest']['date_start'])
@@ -506,17 +478,9 @@ class AccountMove(models.Model):
                 juros_config['valor_juros'] = "{:.2f}".format(interest_penalty_info['interest']['value'])
             
             boleto_data['juros'] = juros_config
-            
-            # 🚨 DEBUG LOG TEMPORÁRIO
-            _logger.info("🔍 DEBUG - Juros config adicionado: %s", juros_config)
-        else:
-            # 🚨 DEBUG LOG TEMPORÁRIO
-            _logger.info("🔍 DEBUG - JUROS NÃO adicionado - Código: %s", interest_penalty_info['interest']['code'])
         
         # === ADICIONA INFORMAÇÕES DE MULTA (SE CONFIGURADO) ===
         if interest_penalty_info['penalty']['code'] and interest_penalty_info['penalty']['code'] != '03':  # Não é isento
-            # 🚨 DEBUG LOG TEMPORÁRIO
-            _logger.info("🔍 DEBUG - Adicionando MULTA ao boleto_data")
             
             from datetime import timedelta
             data_inicio_multa = self.invoice_date_due + timedelta(days=interest_penalty_info['penalty']['date_start'])
@@ -536,25 +500,10 @@ class AccountMove(models.Model):
                 multa_config['percentual_multa'] = percentual_formatado
             
             boleto_data['multa'] = multa_config
-            
-            # 🚨 DEBUG LOG TEMPORÁRIO
-            _logger.info("🔍 DEBUG - Multa config adicionada: %s", multa_config)
-        else:
-            # 🚨 DEBUG LOG TEMPORÁRIO
-            _logger.info("🔍 DEBUG - MULTA NÃO adicionada - Código: %s", interest_penalty_info['penalty']['code'])
         
         # === ADICIONA INFORMAÇÕES DE DESCONTO (SE CONFIGURADO) ===
         if discount_info:
-            # 🚨 DEBUG LOG TEMPORÁRIO
-            _logger.info("🔍 DEBUG - Adicionando DESCONTO ao boleto_data: %s", discount_info)
-            
             boleto_data['desconto'] = discount_info
-        else:
-            # 🚨 DEBUG LOG TEMPORÁRIO
-            _logger.info("🔍 DEBUG - DESCONTO NÃO adicionado - Info vazia")
-        
-        # 🚨 DEBUG LOG TEMPORÁRIO - BOLETO_DATA FINAL
-        _logger.info("🔍 DEBUG - boleto_data FINAL: %s", boleto_data)
         
         return boleto_data
     
@@ -644,276 +593,4 @@ class AccountMove(models.Model):
             move.action_emitir_boleto_itau()
         return True 
 
-    def test_multiple_discounts(self):
-        """
-        Método de teste para demonstrar o novo sistema de múltiplos descontos
-        """
-        self.ensure_one()
-        
-        if not self.invoice_payment_term_id:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('❌ Erro'),
-                    'message': _('Esta fatura não possui termo de pagamento configurado.'),
-                    'type': 'danger',
-                    'sticky': True,
-                }
-            }
-        
-        payment_term = self.invoice_payment_term_id
-        
-        # Verifica se usa novo sistema
-        has_new_system = hasattr(payment_term, 'discount_line_ids') and payment_term.discount_line_ids
-        
-        if has_new_system:
-            # Testa geração de estrutura de desconto
-            discount_data = payment_term.get_itau_discount_data(self.invoice_date)
-            
-            mensagem = f"""💰 NOVO SISTEMA DE DESCONTOS DETECTADO
-            
-🏷️ TERMO DE PAGAMENTO: {payment_term.name}
-📋 Tipo de Desconto: {dict(payment_term._fields['itau_discount_code'].selection)[payment_term.itau_discount_code]}
-📊 Quantidade de Linhas: {len(payment_term.discount_line_ids)}
-
-📅 CONDIÇÕES CONFIGURADAS:"""
-            
-            for line in payment_term.discount_line_ids.sorted('days'):
-                if payment_term.itau_discount_code in ['02', '90']:
-                    mensagem += f"\n• {line.days} dias: {line.value}% de desconto"
-                else:
-                    mensagem += f"\n• {line.days} dias: R$ {line.value:.2f} de desconto"
-            
-            mensagem += f"""
-
-🔧 ESTRUTURA JSON GERADA:
-{discount_data}
-
-📝 INSTRUÇÕES:
-• Para editar: Vá em Faturamento > Configuração > Termos de Pagamento
-• Abra o termo '{payment_term.name}'
-• Acesse a aba '💰 Condições de Desconto'"""
-            
-            title = "✅ Sistema de Múltiplos Descontos Ativo"
-            msg_type = 'success'
-            
-        else:
-            mensagem = f"""⚠️ SISTEMA ANTIGO DE DESCONTOS
-            
-🏷️ TERMO DE PAGAMENTO: {payment_term.name}
-📋 Status: Usando sistema original do Odoo
-
-📝 PARA ATIVAR O NOVO SISTEMA:
-1. Vá em Faturamento > Configuração > Termos de Pagamento
-2. Abra o termo '{payment_term.name}'
-3. Selecione um 'Tipo de Desconto (Itaú)' diferente de 'Sem Desconto'
-4. Configure as condições na aba '💰 Condições de Desconto'
-
-✨ BENEFÍCIOS DO NOVO SISTEMA:
-• Múltiplos descontos escalonados
-• Compatibilidade total com API Itaú
-• Validações automáticas
-• Formatação correta dos valores"""
-            
-            title = "⚠️ Sistema Antigo em Uso"
-            msg_type = 'warning'
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _(title),
-                'message': _(mensagem),
-                'type': msg_type,
-                'sticky': True,
-            }
-        }
-
-    def debug_journal_config(self):
-        """
-        Método de debug para verificar configurações do diário
-        """
-        self.ensure_one()
-        
-        if not self.partner_bank_id:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('❌ Erro'),
-                    'message': _('Nenhuma conta bancária (Banco Destinatário) configurada.'),
-                    'type': 'danger',
-                    'sticky': True,
-                }
-            }
-        
-        journal = self.partner_bank_id.journal_id
-        if not journal:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('❌ Erro'),
-                    'message': _('A conta bancária não está associada a um diário.'),
-                    'type': 'danger',
-                    'sticky': True,
-                }
-            }
-        
-        mensagem = f"""🏦 BANCO DESTINATÁRIO:
-• Banco: {self.partner_bank_id.display_name}
-• Diário: {journal.name}
-• ID Diário: {journal.id}
-• Código Carteira: {journal.itau_wallet_code or 'NÃO CONFIGURADO'}
-
-🤝 CLIENTE (partner_id):
-• Nome: {self.partner_id.name}
-• ID: {self.partner_id.id}
-• Juros: {self.partner_id.payment_interest_code or 'NÃO CONFIGURADO'} ({self.partner_id.payment_interest_percent}%)
-• Multa: {self.partner_id.payment_penalty_code or 'NÃO CONFIGURADO'} ({self.partner_id.payment_penalty_percent}%)
-
-⚙️ DIÁRIO (via partner_bank_id):
-• Juros: {journal.payment_interest_code or 'NÃO CONFIGURADO'} ({journal.payment_interest_percent}%)
-• Multa: {journal.payment_penalty_code or 'NÃO CONFIGURADO'} ({journal.payment_penalty_percent}%)
-
-🔄 RESULTADO DA FUNÇÃO _get_payment_interest_penalty_info():"""
-        
-        try:
-            info = self._get_payment_interest_penalty_info()
-            mensagem += f"""
-• Juros Final: {info['interest']['code'] or 'VAZIO'} ({info['interest']['percent']}%)
-• Multa Final: {info['penalty']['code'] or 'VAZIO'} ({info['penalty']['percent']}%)"""
-        except Exception as e:
-            mensagem += f"\n❌ ERRO: {str(e)}"
-        
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('🔍 Debug Journal'),
-                'message': _(mensagem),
-                'type': 'info',
-                'sticky': True,
-            }
-        }
-
-    def demo_payment_config_usage(self):
-        """
-        Método de demonstração para mostrar como usar as configurações de juros, multa e desconto.
-        
-        Este método pode ser chamado para testar a lógica de fallback e ver como os dados
-        são estruturados para a API do Itaú.
-        """
-        self.ensure_one()
-        
-        # Obtém informações de juros e multa
-        info = self._get_payment_interest_penalty_info()
-        
-        # Obtém informações de desconto
-        discount_info = self._get_discount_info_from_payment_terms()
-        
-        # Obtém dados completos do boleto (igual ao que seria enviado para API)
-        try:
-            boleto_data = self._get_boleto_data_from_invoice()
-            
-            # Formata resposta para demonstração
-            resultado = {
-                'configuracoes_encontradas': {
-                    'juros': {
-                        'codigo': info['interest']['code'],
-                        'percentual': info['interest']['percent'],
-                        'valor': info['interest']['value'],
-                        'dias_inicio': info['interest']['date_start']
-                    },
-                    'multa': {
-                        'codigo': info['penalty']['code'],
-                        'percentual': info['penalty']['percent'],
-                        'valor': info['penalty']['value'],
-                        'dias_inicio': info['penalty']['date_start']
-                    },
-                    'desconto': discount_info
-                },
-                'estrutura_final_api': boleto_data
-            }
-            
-            # Prepara mensagem
-            mensagem_partes = []
-            
-            # Informações de juros
-            if info['interest']['code']:
-                if info['interest']['code'] == '05':
-                    mensagem_partes.append("• Juros: ISENTO (05)")
-                else:
-                    if info['interest']['code'] in ['90', '91', '92']:
-                        mensagem_partes.append(f"• Juros: {info['interest']['code']} ({info['interest']['percent']}%)")
-                    else:
-                        mensagem_partes.append(f"• Juros: {info['interest']['code']} (R$ {info['interest']['value']})")
-            else:
-                mensagem_partes.append("• Juros: Não configurado")
-            
-            # Informações de multa
-            if info['penalty']['code']:
-                if info['penalty']['code'] == '03':
-                    mensagem_partes.append("• Multa: ISENTA (03)")
-                else:
-                    if info['penalty']['code'] == '02':
-                        mensagem_partes.append(f"• Multa: {info['penalty']['code']} ({info['penalty']['percent']}%)")
-                    else:
-                        mensagem_partes.append(f"• Multa: {info['penalty']['code']} (R$ {info['penalty']['value']})")
-            else:
-                mensagem_partes.append("• Multa: Não configurada")
-            
-            # Informações de desconto
-            if discount_info:
-                desconto_count = len(discount_info.get('descontos', []))
-                mensagem_partes.append(f"• Desconto: {desconto_count} configuração(ões)")
-            else:
-                mensagem_partes.append("• Desconto: Não configurado")
-            
-            # Verifica se vai aparecer no JSON final
-            json_include_info = []
-            if boleto_data.get('juros'):
-                json_include_info.append("✅ JUROS será incluído no JSON")
-            else:
-                json_include_info.append("❌ JUROS NÃO será incluído no JSON")
-                
-            if boleto_data.get('multa'):
-                json_include_info.append("✅ MULTA será incluída no JSON")
-            else:
-                json_include_info.append("❌ MULTA NÃO será incluída no JSON")
-                
-            if boleto_data.get('desconto'):
-                json_include_info.append("✅ DESCONTO será incluído no JSON")
-            else:
-                json_include_info.append("❌ DESCONTO NÃO será incluído no JSON")
-            
-            mensagem_completa = (
-                "Configurações encontradas:\n" + 
-                "\n".join(mensagem_partes) + 
-                "\n\n⚙️ STATUS PARA API:\n" +
-                "\n".join(json_include_info)
-            )
-            
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('🔍 Configurações de Pagamento'),
-                    'message': _(mensagem_completa),
-                    'type': 'info',
-                    'sticky': True,
-                }
-            }
-        
-        except Exception as e:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('❌ Erro'),
-                    'message': _(f'Erro ao obter configurações: {str(e)}'),
-                    'type': 'danger',
-                    'sticky': True,
-                }
-            } 
+ 

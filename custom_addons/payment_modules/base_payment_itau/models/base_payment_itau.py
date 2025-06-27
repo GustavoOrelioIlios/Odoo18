@@ -556,27 +556,17 @@ class BasePaymentItau(models.Model):
         
         # === ADICIONA INFORMAÇÕES DE JUROS (SE CONFIGURADO) ===
         if boleto_data.get('juros'):
-            _logger.info("🔍 DEBUG API - Adicionando JUROS ao payload: %s", boleto_data['juros'])
             payload['dado_boleto']['juros'] = boleto_data['juros']
-        else:
-            _logger.info("🔍 DEBUG API - JUROS NÃO encontrado no boleto_data")
         
         # === ADICIONA INFORMAÇÕES DE MULTA (SE CONFIGURADO) ===
         if boleto_data.get('multa'):
-            _logger.info("🔍 DEBUG API - Adicionando MULTA ao payload: %s", boleto_data['multa'])
             payload['dado_boleto']['multa'] = boleto_data['multa']
-        else:
-            _logger.info("🔍 DEBUG API - MULTA NÃO encontrada no boleto_data")
         
         # === ADICIONA INFORMAÇÕES DE DESCONTO (SE CONFIGURADO) ===
         if boleto_data.get('desconto'):
-            _logger.info("🔍 DEBUG API - Adicionando DESCONTO ao payload: %s", boleto_data['desconto'])
             payload['dado_boleto']['desconto'] = boleto_data['desconto']
-        else:
-            _logger.info("🔍 DEBUG API - DESCONTO NÃO encontrado no boleto_data")
         
-        # 🚨 DEBUG LOG TEMPORÁRIO - PAYLOAD FINAL
-        _logger.info("🔍 DEBUG API - PAYLOAD FINAL: %s", payload)
+
         
         # Prepara requisição
         url = self.get_api_url('boletos')

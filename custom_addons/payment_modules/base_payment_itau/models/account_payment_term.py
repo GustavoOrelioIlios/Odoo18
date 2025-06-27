@@ -119,11 +119,7 @@ class AccountPaymentTerm(models.Model):
                 valor_em_centavos = int(line.value * 100)  # Converte para centavos
                 valor_formatado = "{:017d}".format(valor_em_centavos)
                 
-                # Log para debug
-                import logging
-                _logger = logging.getLogger(__name__)
-                _logger.info("🔍 DEBUG VALOR DESCONTO - Valor original: %s, Em centavos: %d, Formatado: %s (len: %d)", 
-                            line.value, valor_em_centavos, valor_formatado, len(valor_formatado))
+
                 
                 desconto_info['valor_desconto'] = valor_formatado
             

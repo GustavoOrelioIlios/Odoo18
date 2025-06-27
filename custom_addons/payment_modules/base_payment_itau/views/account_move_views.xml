@@ -38,24 +38,7 @@
                                     class="btn-secondary"
                                     invisible="state != 'posted'"
                                     help="Clique para emitir ou reemitir o boleto Itaú"/>
-                            <button name="demo_payment_config_usage" 
-                                    string="🔍 Ver Configurações de Juros/Multa" 
-                                    type="object" 
-                                    class="btn-info"
-                                    invisible="state != 'posted'"
-                                    help="Mostra como as configurações de juros, multa e desconto serão aplicadas"/>
-                            <button name="debug_journal_config" 
-                                    string="🔧 Debug Diário" 
-                                    type="object" 
-                                    class="btn-warning"
-                                    invisible="state != 'posted'"
-                                    help="Debug: Verifica configurações do diário e fallback"/>
-                            <button name="test_multiple_discounts" 
-                                    string="💰 Testar Descontos" 
-                                    type="object" 
-                                    class="btn-primary"
-                                    invisible="state != 'posted'"
-                                    help="Testa o novo sistema de múltiplos descontos"/>
+
                         </group>
                         
                         

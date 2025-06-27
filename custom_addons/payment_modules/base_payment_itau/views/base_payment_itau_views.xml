@@ -15,66 +15,6 @@
                        options="{'no_create': True}"/>
             </field>
             
-            <!-- Adiciona botões específicos do Itaú -->
-            <button name="testar_token" position="after">
-                <!-- Botão para testar POST com dados bancários -->
-                <button name="action_test_post_boleto_with_bank_data" 
-                        type="object" 
-                        string="Testar POST Boleto (Dados Bancários)" 
-                        class="btn-warning" 
-                        icon="fa-plus-square"
-                        invisible="integracao != 'itau_boleto' or not partner_bank_id"/>
-            </button>
-        </field>
-    </record>
-
-    <!-- Herda e estende a view form do base_payment_api para o Itaú -->
-    <record id="view_base_payment_itau_form" model="ir.ui.view">
-        <field name="name">base.payment.itau.form</field>
-        <field name="model">base.payment.api</field>
-        <field name="inherit_id" ref="base_payment_api.view_base_payment_api_form"/>
-        <field name="arch" type="xml">
-            
-            <!-- Adiciona botão específico do Itaú no header -->
-            <xpath expr="//header/button[@name='testar_token']" position="after">
-                <button name="action_test_post_boleto_with_bank_data" 
-                        type="object" 
-                        string="Teste POST Boleto com Dados Bancários" 
-                        class="btn-secondary" 
-                        icon="fa-file-text-o"
-                        invisible="integracao != 'itau_boleto'"/>
-            </xpath>
-            
-            <!-- Adiciona campo específico do Itaú -->
-            <xpath expr="//field[@name='company_id']" position="after">
-                <field name="partner_bank_id" 
-                       invisible="integracao != 'itau_boleto'"
-                       context="{'default_bank_id': bank_id}"
-                       domain="[('bank_id', '=', bank_id)]"/>
-            </xpath>
-            
-            <!-- Adiciona nova aba para JSONs de Debug/Logs após a aba "Descrição" -->
-            <xpath expr="//page[@name='description']" position="after">
-                <page string="Debug/Logs" name="debug_logs" invisible="integracao != 'itau_boleto'">
-                    <group>
-                        <group string="JSON Enviado (Último Teste POST)">
-                            <field name="test_json_enviado" 
-                                   widget="text" 
-                                   nolabel="1"
-                                   placeholder="Nenhum teste POST executado ainda..."
-                                   class="o_field_text_code"/>
-                        </group>
-                        <group string="JSON Retorno (Último Teste POST)">
-                            <field name="test_json_retorno" 
-                                   widget="text" 
-                                   nolabel="1"
-                                   placeholder="Nenhuma resposta ainda..."
-                                   class="o_field_text_code"/>
-                        </group>
-                    </group>
-                </page>
-            </xpath>
-            
         </field>
     </record>
 
