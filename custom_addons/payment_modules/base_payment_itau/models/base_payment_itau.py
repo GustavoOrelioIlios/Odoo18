@@ -542,20 +542,41 @@ class BasePaymentItau(models.Model):
             'dado_boleto': {
                 'codigo_carteira': boleto_data.get('codigo_carteira'),
                 'codigo_especie': boleto_data.get('codigo_especie'),
-                'descricao_especie': boleto_data.get('descricao_especie', ''),  # CAMPO ADICIONADO
-                'descricao_instrumento_cobranca': boleto_data.get('descricao_instrumento_cobranca', 'boleto'),  # CAMPO ADICIONADO
+                'descricao_especie': boleto_data.get('descricao_especie', ''),
+                'descricao_instrumento_cobranca': boleto_data.get('descricao_instrumento_cobranca', 'boleto'),
                 'codigo_aceite': boleto_data.get('codigo_aceite', 'S'),
                 'tipo_boleto': boleto_data.get('tipo_boleto', 'proposta'),
                 'data_emissao': boleto_data.get('data_emissao', datetime.now().strftime("%Y-%m-%d")),
-                
-
-                
-                'pagador': pagador_data,  # Estrutura já corrigida no account_move.py
+                'pagador': pagador_data,
                 'dados_individuais_boleto': boleto_data.get('dados_individuais_boleto', []),
             },
             'etapa_processo_boleto': 'validacao',
             'codigo_canal_operacao': 'BKL'
         }
+        
+        # === ADICIONA INFORMAÇÕES DE JUROS (SE CONFIGURADO) ===
+        if boleto_data.get('juros'):
+            _logger.info("🔍 DEBUG API - Adicionando JUROS ao payload: %s", boleto_data['juros'])
+            payload['dado_boleto']['juros'] = boleto_data['juros']
+        else:
+            _logger.info("🔍 DEBUG API - JUROS NÃO encontrado no boleto_data")
+        
+        # === ADICIONA INFORMAÇÕES DE MULTA (SE CONFIGURADO) ===
+        if boleto_data.get('multa'):
+            _logger.info("🔍 DEBUG API - Adicionando MULTA ao payload: %s", boleto_data['multa'])
+            payload['dado_boleto']['multa'] = boleto_data['multa']
+        else:
+            _logger.info("🔍 DEBUG API - MULTA NÃO encontrada no boleto_data")
+        
+        # === ADICIONA INFORMAÇÕES DE DESCONTO (SE CONFIGURADO) ===
+        if boleto_data.get('desconto'):
+            _logger.info("🔍 DEBUG API - Adicionando DESCONTO ao payload: %s", boleto_data['desconto'])
+            payload['dado_boleto']['desconto'] = boleto_data['desconto']
+        else:
+            _logger.info("🔍 DEBUG API - DESCONTO NÃO encontrado no boleto_data")
+        
+        # 🚨 DEBUG LOG TEMPORÁRIO - PAYLOAD FINAL
+        _logger.info("🔍 DEBUG API - PAYLOAD FINAL: %s", payload)
         
         # Prepara requisição
         url = self.get_api_url('boletos')

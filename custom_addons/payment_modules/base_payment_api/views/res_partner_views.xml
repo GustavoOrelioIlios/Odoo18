@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista de formulário para res.partner - Configurações de Pagamento -->
+    <record id="view_partner_form_payment_config" model="ir.ui.view">
+        <field name="name">res.partner.form.payment.config</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page name="payment_config" string="Configurações de Pagamento">
+                    <group>
+                        <group string="Configurações de Juros">
+                            <field name="payment_interest_code"/>
+                            <field name="payment_interest_percent" invisible="payment_interest_code in [False, '05', '93']"/>
+                            <field name="payment_interest_value" invisible="payment_interest_code in [False, '05', '90', '91', '92']"/>
+                            <field name="payment_interest_date_start" invisible="payment_interest_code in [False, '05']"/>
+                        </group>
+                        <group string="Configurações de Multa">
+                            <field name="payment_penalty_code"/>
+                            <field name="payment_penalty_percent" invisible="payment_penalty_code in [False, '03', '01']"/>
+                            <field name="payment_penalty_value" invisible="payment_penalty_code in [False, '03', '02']"/>
+                            <field name="payment_penalty_date_start" invisible="payment_penalty_code in [False, '03']"/>
+                        </group>
+                    </group>
+                    <group>
+                        <div class="alert alert-info" role="alert">
+                            <strong>Informação:</strong> Estas configurações serão aplicadas prioritariamente para boletos bancários deste cliente. 
+                            Se algum campo não estiver preenchido, o sistema utilizará as configurações padrão do diário.
+                        </div>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo> 

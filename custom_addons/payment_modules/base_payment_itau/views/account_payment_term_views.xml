@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+        <!-- View para account.payment.term.discount -->
+        <record id="view_payment_term_discount_list" model="ir.ui.view">
+            <field name="name">account.payment.term.discount.list</field>
+            <field name="model">account.payment.term.discount</field>
+            <field name="arch" type="xml">
+                <list editable="bottom" create="true" delete="true">
+                    <field name="days" string="Dias"/>
+                    <field name="value" string="Valor"/>
+                    <field name="display_info" string="Resumo" readonly="1"/>
+                </list>
+            </field>
+        </record>
+
+        <record id="view_payment_term_discount_form" model="ir.ui.view">
+            <field name="name">account.payment.term.discount.form</field>
+            <field name="model">account.payment.term.discount</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="payment_term_id" readonly="1"/>
+                            <field name="days"/>
+                            <field name="value"/>
+                        </group>
+                        <group>
+                            <field name="display_info" readonly="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Extensão do formulário de account.payment.term -->
+        <record id="view_payment_term_form_inherited_discount" model="ir.ui.view">
+            <field name="name">account.payment.term.form.inherited.discount</field>
+            <field name="model">account.payment.term</field>
+            <field name="inherit_id" ref="account.view_payment_term_form"/>
+            <field name="arch" type="xml">
+                
+                <!-- Adiciona seção de configurações Itaú após todos os grupos existentes -->
+                <xpath expr="//sheet/group[last()]" position="after">
+
+                    <!-- Seção de configurações do Itaú -->
+                    <group string="Configurações de Desconto">
+                        <group string="Tipo de Desconto">
+                            <field name="itau_discount_code"/>
+                            <div invisible="itau_discount_code == '00'" colspan="2">
+                                <p class="text-muted">
+                                    <strong>Importante:</strong> O tipo selecionado se aplica a TODAS as condições de desconto abaixo.
+                                    <span invisible="itau_discount_code not in ['01', '91']">Valor em reais (ex: 10.50)</span>
+                                    <span invisible="itau_discount_code not in ['02', '90']">Percentual (ex: 5.0 para 5%)</span>
+                                </p>
+                            </div>
+                        </group>
+                        <group string="Condições de Desconto" invisible="itau_discount_code == '00'">
+                            <field name="discount_line_ids" nolabel="1" colspan="2">
+                                <list editable="bottom" create="true" delete="true">
+                                    <!-- Campos invisíveis para computações -->
+                                    <field name="is_percentage_type" column_invisible="1"/>
+                                    <field name="value_label" column_invisible="1"/>
+                                    
+                                    <field name="days" string="Dias após emissão"/>
+                                    <!-- Mostra apenas uma coluna por vez baseado no tipo -->
+                                    <field name="value" 
+                                           string="Valor (R$)" 
+                                           column_invisible="parent.itau_discount_code in ['02', '90']"/>
+                                    <field name="value" 
+                                           string="Percentual (%)" 
+                                           column_invisible="parent.itau_discount_code not in ['02', '90']"/>
+                                    <field name="display_info" string="Resumo" readonly="1"/>
+                                </list>
+                            </field>
+                        </group>
+                    </group>
+                        
+                </xpath>
+            </field>
+        </record>
+
+        <!-- View em lista melhorada para account.payment.term -->
+        <record id="view_payment_term_tree_inherited_discount" model="ir.ui.view">
+            <field name="name">account.payment.term.tree.inherited.discount</field>
+            <field name="model">account.payment.term</field>
+            <field name="inherit_id" ref="account.view_payment_term_tree"/>
+            <field name="arch" type="xml">
+                
+                <!-- Adiciona coluna para mostrar tipo de desconto -->
+                <field name="company_id" position="after">
+                    <field name="itau_discount_code" 
+                           string="Desconto Itaú"
+                           optional="show"/>
+                </field>
+                
+            </field>
+        </record>
+
+    </data>
+</odoo> 

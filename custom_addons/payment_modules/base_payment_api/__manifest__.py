@@ -24,6 +24,8 @@
     'depends': [
         'base',
         'mail',
+        'account',
+        'contacts',
     ],
     'external_dependencies': {
         'python': ['requests'],
@@ -32,6 +34,8 @@
         'security/ir.model.access.csv',
         'views/base_payment_api_views.xml',
         'views/payment_test_result_wizard_views.xml',
+        'views/res_partner_views.xml',
+        'views/account_journal_views.xml',
     ],
     'installable': True,
     'application': True,

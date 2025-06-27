@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_move_boleto_user,move.boleto.user,model_move_boleto,base.group_user,1,1,1,1
+access_account_payment_term_discount_user,account.payment.term.discount.user,model_account_payment_term_discount,base.group_user,1,1,1,1
+access_account_payment_term_discount_manager,account.payment.term.discount.manager,model_account_payment_term_discount,account.group_account_manager,1,1,1,1

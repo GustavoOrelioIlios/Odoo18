@@ -527,6 +527,177 @@ class BoletoIndividualModel(BaseModel):
     )
 
 
+class JurosModel(BaseModel):
+    """Modelo para configurações de juros"""
+    
+    codigo_tipo_juros: str = Field(
+        ...,
+        pattern=r'^(90|91|92|93|05)$',
+        description="Código do tipo de juros (90=% Mensal, 91=% Diário, 92=% Anual, 93=Valor Diário, 05=Isento)"
+    )
+    data_juros: str = Field(
+        ...,
+        pattern=r'^\d{4}-\d{2}-\d{2}$',
+        description="Data de início dos juros no formato YYYY-MM-DD"
+    )
+    percentual_juros: Optional[str] = Field(
+        None,
+        pattern=r'^\d{12}$',
+        description="Percentual de juros formatado como string de 12 dígitos (usado para códigos 90, 91, 92)"
+    )
+    valor_juros: Optional[str] = Field(
+        None,
+        description="Valor fixo de juros (usado para código 93)"
+    )
+    
+    @field_validator('data_juros')
+    @classmethod
+    def validar_data_juros(cls, v):
+        """Valida formato da data de juros"""
+        try:
+            datetime.strptime(v, '%Y-%m-%d')
+            return v
+        except ValueError:
+            raise ValueError('Data de juros deve estar no formato YYYY-MM-DD')
+    
+    model_config = ConfigDict(
+        validate_assignment=True,
+        str_strip_whitespace=True
+    )
+
+
+class MultaModel(BaseModel):
+    """Modelo para configurações de multa"""
+    
+    codigo_tipo_multa: str = Field(
+        ...,
+        pattern=r'^(01|02|03)$',
+        description="Código do tipo de multa (01=Valor Fixo, 02=Percentual, 03=Isento)"
+    )
+    data_multa: str = Field(
+        ...,
+        pattern=r'^\d{4}-\d{2}-\d{2}$',
+        description="Data de início da multa no formato YYYY-MM-DD"
+    )
+    valor_multa: Optional[str] = Field(
+        None,
+        description="Valor fixo da multa (usado para código 01)"
+    )
+    percentual_multa: Optional[str] = Field(
+        None,
+        pattern=r'^\d{12}$',
+        description="Percentual de multa formatado como string de 12 dígitos (usado para código 02)"
+    )
+    
+    @field_validator('data_multa')
+    @classmethod
+    def validar_data_multa(cls, v):
+        """Valida formato da data de multa"""
+        try:
+            datetime.strptime(v, '%Y-%m-%d')
+            return v
+        except ValueError:
+            raise ValueError('Data de multa deve estar no formato YYYY-MM-DD')
+    
+    model_config = ConfigDict(
+        validate_assignment=True,
+        str_strip_whitespace=True
+    )
+
+
+class DescontoIndividualModel(BaseModel):
+    """Modelo para desconto individual - suporta tanto percentual quanto valor fixo"""
+    
+    data_desconto: str = Field(
+        ...,
+        pattern=r'^\d{4}-\d{2}-\d{2}$',
+        description="Data do desconto no formato YYYY-MM-DD"
+    )
+    percentual_desconto: Optional[str] = Field(
+        None,
+        pattern=r'^\d{12}$',
+        description="Percentual de desconto formatado como string de 12 dígitos (para códigos 02, 90)"
+    )
+    valor_desconto: Optional[str] = Field(
+        None,
+        pattern=r'^\d{17}$',
+        description="Valor fixo de desconto formatado como string de 17 dígitos (para códigos 01, 91)"
+    )
+    
+    @field_validator('data_desconto')
+    @classmethod
+    def validar_data_desconto(cls, v):
+        """Valida formato da data de desconto"""
+        try:
+            datetime.strptime(v, '%Y-%m-%d')
+            return v
+        except ValueError:
+            raise ValueError('Data de desconto deve estar no formato YYYY-MM-DD')
+    
+    @field_validator('percentual_desconto', 'valor_desconto')
+    @classmethod
+    def validar_desconto_exclusivo(cls, v, info):
+        """Valida que apenas um tipo de desconto seja informado por vez"""
+        if info.data.get('percentual_desconto') and info.data.get('valor_desconto'):
+            raise ValueError('Apenas um tipo de desconto pode ser informado (percentual OU valor)')
+        return v
+    
+    model_config = ConfigDict(
+        validate_assignment=True,
+        str_strip_whitespace=True
+    )
+
+
+class DescontoModel(BaseModel):
+    """Modelo para configurações de desconto conforme API Itaú"""
+    
+    codigo_tipo_desconto: str = Field(
+        ...,
+        pattern=r'^(00|01|02|90|91)$',
+        description="Código do tipo de desconto conforme API Itaú: "
+                   "00=Sem Desconto, 01=Valor Fixo, 02=Percentual, "
+                   "90=Percentual por Antecipação, 91=Valor por Antecipação"
+    )
+    descontos: List[DescontoIndividualModel] = Field(
+        ...,
+        min_length=1,
+        description="Lista de descontos individuais (obrigatório quando código != 00)"
+    )
+    
+    @field_validator('descontos')
+    @classmethod
+    def validar_descontos_consistencia(cls, v, info):
+        """Valida consistência entre código de desconto e linhas de desconto"""
+        codigo = info.data.get('codigo_tipo_desconto')
+        
+        if codigo == '00' and v:
+            raise ValueError('Quando código é 00 (Sem Desconto), não deve haver linhas de desconto')
+        
+        if codigo != '00' and not v:
+            raise ValueError('Quando código != 00, deve haver pelo menos uma linha de desconto')
+        
+        # Valida se o tipo correto de desconto está sendo usado
+        for desconto in v:
+            if codigo in ['02', '90']:  # Percentual
+                if desconto.valor_desconto:
+                    raise ValueError(f'Para código {codigo} (percentual), use apenas percentual_desconto')
+                if not desconto.percentual_desconto:
+                    raise ValueError(f'Para código {codigo} (percentual), percentual_desconto é obrigatório')
+            
+            elif codigo in ['01', '91']:  # Valor fixo
+                if desconto.percentual_desconto:
+                    raise ValueError(f'Para código {codigo} (valor fixo), use apenas valor_desconto')
+                if not desconto.valor_desconto:
+                    raise ValueError(f'Para código {codigo} (valor fixo), valor_desconto é obrigatório')
+        
+        return v
+    
+    model_config = ConfigDict(
+        validate_assignment=True,
+        str_strip_whitespace=True
+    )
+
+
 class BoletoModel(BaseModel):
     """Modelo principal para validação completa do boleto com campos adicionais"""
     
@@ -565,7 +736,19 @@ class BoletoModel(BaseModel):
         description="Data de emissão no formato YYYY-MM-DD"
     )
     
-
+    # === NOVOS CAMPOS PARA JUROS, MULTA E DESCONTO ===
+    juros: Optional[JurosModel] = Field(
+        None,
+        description="Configurações de juros (opcional)"
+    )
+    multa: Optional[MultaModel] = Field(
+        None,
+        description="Configurações de multa (opcional)"
+    )
+    desconto: Optional[DescontoModel] = Field(
+        None,
+        description="Configurações de desconto (opcional)"
+    )
     
     dados_individuais_boleto: List[BoletoIndividualModel] = Field(
         ...,

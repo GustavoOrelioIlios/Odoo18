@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista de formulário para account.journal - Configurações Padrão de Pagamento -->
+    <record id="view_account_journal_form_payment_config" model="ir.ui.view">
+        <field name="name">account.journal.form.payment.config</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='advanced_settings']" position="after">
+                <page name="payment_config" string="Configurações de Pagamento">
+                    <group>
+                        <group string="Configurações Padrão de Juros">
+                            <field name="payment_interest_code"/>
+                            <field name="payment_interest_percent" invisible="payment_interest_code in [False, '05', '93']"/>
+                            <field name="payment_interest_value" invisible="payment_interest_code in [False, '05', '90', '91', '92']"/>
+                            <field name="payment_interest_date_start" invisible="payment_interest_code in [False, '05']"/>
+                        </group>
+                        <group string="Configurações Padrão de Multa">
+                            <field name="payment_penalty_code"/>
+                            <field name="payment_penalty_percent" invisible="payment_penalty_code in [False, '03', '01']"/>
+                            <field name="payment_penalty_value" invisible="payment_penalty_code in [False, '03', '02']"/>
+                            <field name="payment_penalty_date_start" invisible="payment_penalty_code in [False, '03']"/>
+                        </group>
+                    </group>
+                    <group>
+                        <div class="alert alert-warning" role="alert">
+                            <strong>Configurações Padrão:</strong> Estas configurações serão aplicadas quando o cliente não tiver configurações específicas definidas. 
+                            Configure sempre um fallback para garantir que boletos bancários tenham as informações necessárias.
+                        </div>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo> 
