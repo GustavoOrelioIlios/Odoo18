@@ -698,6 +698,58 @@ class DescontoModel(BaseModel):
     )
 
 
+class ProtestoModel(BaseModel):
+    """Modelo para configurações de protesto"""
+    
+    codigo_tipo_protesto: int = Field(
+        ...,
+        ge=1,
+        le=9,
+        description="Código de protesto (1=Protestar, 4=Não Protestar, 9=Cancelar Protesto)"
+    )
+    quantidade_dias_protesto: Optional[int] = Field(
+        None,
+        ge=1,
+        le=99,
+        description="Dias para protesto (entre 1 e 99)"
+    )
+    protesto_falimentar: bool = Field(
+        default=True,
+        description="Indica se é protesto falimentar"
+    )
+
+
+class NegativacaoModel(BaseModel):
+    """Modelo para configurações de negativação"""
+    
+    codigo_tipo_negativacao: int = Field(
+        ...,
+        ge=2,
+        le=10,
+        description="Código de negativação (2=Negativar, 5=Não Negativar, 10=Cancelar Negativação)"
+    )
+    quantidade_dias_negativacao: Optional[int] = Field(
+        None,
+        ge=2,
+        le=99,
+        description="Dias para negativação (entre 2 e 99)"
+    )
+    
+    @field_validator('quantidade_dias_negativacao')
+    @classmethod
+    def validar_dias_negativacao(cls, v, info):
+        """Valida que quantidade_dias_negativacao é obrigatório quando codigo_tipo_negativacao é 2"""
+        codigo_negativacao = info.data.get('codigo_tipo_negativacao')
+        if codigo_negativacao == 2 and not v:
+            raise ValueError('Dias para negativação é obrigatório quando código é 2 (Negativar)')
+        return v
+    
+    model_config = ConfigDict(
+        validate_assignment=True,
+        str_strip_whitespace=True
+    )
+
+
 class BoletoModel(BaseModel):
     """Modelo principal para validação completa do boleto com campos adicionais"""
     
@@ -717,9 +769,9 @@ class BoletoModel(BaseModel):
         description="Descrição da espécie do título"
     )
     descricao_instrumento_cobranca: Optional[str] = Field(
-        None,
+        default="boleto",
         max_length=50,
-        description="Descrição do instrumento de cobrança (ex: 'boleto')"
+        description="Descrição do instrumento de cobrança (fixo como 'boleto')"
     )
     codigo_aceite: str = Field(
         default="S",
@@ -750,6 +802,16 @@ class BoletoModel(BaseModel):
         description="Configurações de desconto (opcional)"
     )
     
+    # === CAMPOS PARA PROTESTO E NEGATIVAÇÃO ===
+    protesto: Optional[ProtestoModel] = Field(
+        None,
+        description="Configurações de protesto (opcional)"
+    )
+    negativacao: Optional[NegativacaoModel] = Field(
+        None,
+        description="Configurações de negativação (opcional)"
+    )
+    
     dados_individuais_boleto: List[BoletoIndividualModel] = Field(
         ...,
         min_length=1,
@@ -765,8 +827,6 @@ class BoletoModel(BaseModel):
             return v
         except ValueError:
             raise ValueError('Data de emissão deve estar no formato YYYY-MM-DD')
-    
-
     
     model_config = ConfigDict(
         validate_assignment=True,

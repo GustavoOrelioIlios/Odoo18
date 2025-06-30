@@ -76,7 +76,61 @@ class AccountMove(models.Model):
         help="Boletos bancários gerados para esta fatura"
     )
     
+    # === NOVOS CAMPOS PARA PROTESTO E NEGATIVAÇÃO ===
+    itau_protest_code = fields.Selection([
+        ('1', 'Protestar'),
+        ('4', 'Não Protestar'),
+        ('9', 'Cancelar Protesto')
+    ], string='Código de Protesto',
+        help="O código indica o tipo de ação de protesto a ser tomada para esta fatura."
+    )
+    
+    itau_protest_days = fields.Integer(
+        string='Dias para Protesto',
+        help="Quantidade de dias após o vencimento para protestar o título. Informar entre 1 e 99 dias."
+    )
+    
+    itau_negativation_code = fields.Selection([
+        ('2', 'Negativar'),
+        ('5', 'Não Negativar'),
+        ('10', 'Cancelar Negativação')
+    ], string='Código de Negativação',
+        help="Código que indica o tipo de ação de negativação para esta fatura."
+    )
+    
+    itau_negativation_days = fields.Integer(
+        string='Dias para Negativação',
+        help="Quantidade de dias após o vencimento para negativar o título. Informar entre 2 e 99 dias."
+    )
+    
+    collection_messages = fields.Text(
+        string='Mensagens de Cobrança',
+        help="Campo para mensagens adicionais ou notas relacionadas à cobrança desta fatura."
+    )
+    
+    @api.constrains('itau_protest_days')
+    def _check_protest_days(self):
+        for record in self:
+            if record.itau_protest_code == '1' and record.itau_protest_days:
+                if not (1 <= record.itau_protest_days <= 99):
+                    raise ValidationError(_("Dias para protesto deve estar entre 1 e 99 dias."))
 
+    @api.constrains('itau_negativation_days')
+    def _check_negativation_days(self):
+        for record in self:
+            if record.itau_negativation_code == '2' and record.itau_negativation_days:
+                if not (2 <= record.itau_negativation_days <= 99):
+                    raise ValidationError(_("Dias para negativação deve estar entre 2 e 99 dias."))
+
+    @api.onchange('itau_protest_code')
+    def _onchange_protest_code(self):
+        if self.itau_protest_code != '1':
+            self.itau_protest_days = False
+
+    @api.onchange('itau_negativation_code')
+    def _onchange_negativation_code(self):
+        if self.itau_negativation_code != '2':
+            self.itau_negativation_days = False
     
     @api.depends('itau_boleto_json_request', 'itau_boleto_json_response')
     def _compute_itau_boleto_formatted(self):
@@ -400,110 +454,54 @@ class AccountMove(models.Model):
         return pagador_data
     
     def _get_boleto_data_from_invoice(self):
-        """
-        Extrai dados específicos do boleto da fatura com campos adicionais
-        """
-        # --- CORREÇÃO: Pega configurações do diário do banco destinatário ---
-        if not self.partner_bank_id:
-            raise UserError(_("O campo 'Banco Destinatário' é obrigatório para emitir um boleto."))
+        """Obtém dados do boleto a partir da fatura"""
+        self.ensure_one()
         
-        journal = self.partner_bank_id.journal_id
-        if not journal:
-            raise UserError(_("A conta bancária selecionada não está associada a um Diário. Verifique a configuração em 'Faturamento > Configuração > Contas Bancárias'."))
-        
-        # Pega o código da carteira do diário correto - obrigatório
-        codigo_carteira = journal.itau_wallet_code
-        if not codigo_carteira:
-            raise UserError(_('O campo "Código da Carteira de Cobrança (Itaú)" deve ser preenchido no diário %s') % journal.name)
-        
-        # Pega o código da espécie do diário correto - obrigatório
-        codigo_especie = journal.l10n_br_is_payment_mode_id
-        if not codigo_especie:
-            raise UserError(_('O campo "Código da Espécie do Título (Itaú)" deve ser preenchido no diário %s') % journal.name)
-        
-        # Gera ou busca o "Nosso Número" se não existir
-        if not self.l10n_br_is_own_number:
-            own_number = self.env['ir.sequence'].next_by_code('itau.nosso.numero')
-            self.write({'l10n_br_is_own_number': own_number})
-        
-        # Busca ou cria o registro move.boleto
-        boleto_record = self.env['move.boleto'].search([('invoice_id', '=', self.id)], limit=1)
-        if not boleto_record:
-            boleto_record = self.env['move.boleto'].create({'invoice_id': self.id})
-        
-        # === OBTÉM INFORMAÇÕES DE JUROS E MULTA ===
-        interest_penalty_info = self._get_payment_interest_penalty_info()
-        
-        # === OBTÉM INFORMAÇÕES DE DESCONTO ===
-        discount_info = self._get_discount_info_from_payment_terms()
-        
+        # Obtém dados básicos do boleto
         boleto_data = {
-            'codigo_carteira': codigo_carteira,
-            'codigo_especie': codigo_especie,
-            'descricao_especie': journal.l10n_br_is_payment_mode_description or '',  # CAMPO ADICIONADO
-            'descricao_instrumento_cobranca': 'boleto',  # CAMPO ADICIONADO
+            'codigo_carteira': self.partner_bank_id.journal_id.itau_wallet_code or '109',
+            'codigo_especie': self.partner_bank_id.journal_id.l10n_br_is_payment_mode_id or '01',
+            'descricao_especie': dict(self.partner_bank_id.journal_id._fields['l10n_br_is_payment_mode_id'].selection).get(
+                self.partner_bank_id.journal_id.l10n_br_is_payment_mode_id, ''
+            ),
+            'descricao_instrumento_cobranca': 'boleto',
             'codigo_aceite': 'S',
             'tipo_boleto': 'proposta',
-            'data_emissao': fields.Date.context_today(self).strftime('%Y-%m-%d'),
-            
+            'data_emissao': fields.Date.today().strftime('%Y-%m-%d'),
             'dados_individuais_boleto': [{
-                'valor_titulo': f"{self.amount_total:.2f}",
-                'data_vencimento': self.invoice_date_due.strftime('%Y-%m-%d') if self.invoice_date_due else fields.Date.context_today(self).strftime('%Y-%m-%d'),
-                'data_limite_pagamento': self.invoice_date_due.strftime('%Y-%m-%d') if self.invoice_date_due else fields.Date.context_today(self).strftime('%Y-%m-%d'),  # CAMPO ADICIONADO
-                'id_boleto_individual': boleto_record.itau_boleto_id or str(uuid.uuid4()),
-                'numero_nosso_numero': self.l10n_br_is_own_number,
-                'texto_seu_numero': self.name or '',
-                'texto_uso_beneficiario': f"Fatura {self.name}" if self.name else 'Fatura',
-            }],
+                'valor_titulo': str(self.amount_total),
+                'data_vencimento': self.invoice_date_due.strftime('%Y-%m-%d'),
+                'data_limite_pagamento': self.invoice_date_due.strftime('%Y-%m-%d'),
+                'id_boleto_individual': str(uuid.uuid4()),
+                'numero_nosso_numero': self.l10n_br_is_own_number or '',
+                'texto_seu_numero': f"NFe {self.name}" if self.name else '',
+                'texto_uso_beneficiario': None
+            }]
         }
         
-        # === ADICIONA INFORMAÇÕES DE JUROS (SE CONFIGURADO) ===
-        if interest_penalty_info['interest']['code'] and interest_penalty_info['interest']['code'] != '05':  # Não é isento
-            
-            from datetime import timedelta
-            data_inicio_juros = self.invoice_date_due + timedelta(days=interest_penalty_info['interest']['date_start'])
-            
-            juros_config = {
-                'codigo_tipo_juros': interest_penalty_info['interest']['code'],
-                'data_juros': data_inicio_juros.strftime('%Y-%m-%d')
-            }
-            
-            # Adiciona valor ou percentual dependendo do tipo
-            if interest_penalty_info['interest']['code'] in ['90', '91', '92']:  # Percentual
-                # Formata percentual como string de 12 dígitos sem decimais
-                # Exemplo: 1.5% = 150000000000 (1.5 * 100 * 1000000000)
-                percentual_formatado = "{:012.0f}".format(interest_penalty_info['interest']['percent'] * 10000000000)
-                juros_config['percentual_juros'] = percentual_formatado
-            elif interest_penalty_info['interest']['code'] == '93':  # Valor Diário
-                juros_config['valor_juros'] = "{:.2f}".format(interest_penalty_info['interest']['value'])
-            
-            boleto_data['juros'] = juros_config
+        # Adiciona dados de juros e multa se configurados
+        juros_info = self._get_payment_interest_penalty_info()
+        if juros_info:
+            boleto_data.update(juros_info)
         
-        # === ADICIONA INFORMAÇÕES DE MULTA (SE CONFIGURADO) ===
-        if interest_penalty_info['penalty']['code'] and interest_penalty_info['penalty']['code'] != '03':  # Não é isento
-            
-            from datetime import timedelta
-            data_inicio_multa = self.invoice_date_due + timedelta(days=interest_penalty_info['penalty']['date_start'])
-            
-            multa_config = {
-                'codigo_tipo_multa': interest_penalty_info['penalty']['code'],
-                'data_multa': data_inicio_multa.strftime('%Y-%m-%d')
-            }
-            
-            # Adiciona valor ou percentual dependendo do tipo
-            if interest_penalty_info['penalty']['code'] == '01':  # Valor Fixo
-                multa_config['valor_multa'] = "{:.2f}".format(interest_penalty_info['penalty']['value'])
-            elif interest_penalty_info['penalty']['code'] == '02':  # Percentual
-                # Formata percentual como string de 12 dígitos sem decimais
-                # Exemplo: 2.0% = 200000000000 (2.0 * 100 * 1000000000)
-                percentual_formatado = "{:012.0f}".format(interest_penalty_info['penalty']['percent'] * 10000000000)
-                multa_config['percentual_multa'] = percentual_formatado
-            
-            boleto_data['multa'] = multa_config
+        # Adiciona dados de desconto se configurados
+        desconto_info = self._get_discount_info_from_payment_terms()
+        if desconto_info:
+            boleto_data.update(desconto_info)
         
-        # === ADICIONA INFORMAÇÕES DE DESCONTO (SE CONFIGURADO) ===
-        if discount_info:
-            boleto_data['desconto'] = discount_info
+        # Adiciona dados de protesto e negativação se configurados
+        if self.itau_protest_code:
+            boleto_data['protesto'] = {
+                'codigo_tipo_protesto': int(self.itau_protest_code),
+                'quantidade_dias_protesto': self.itau_protest_days if self.itau_protest_code == '1' else None,
+                'protesto_falimentar': True
+            }
+        
+        if self.itau_negativation_code:
+            boleto_data['negativacao'] = {
+                'codigo_tipo_negativacao': int(self.itau_negativation_code),
+                'quantidade_dias_negativacao': self.itau_negativation_days if self.itau_negativation_code == '2' else None
+            }
         
         return boleto_data
     
@@ -577,7 +575,7 @@ class AccountMove(models.Model):
             
             journal = move.partner_bank_id.journal_id
             if not journal:
-                raise UserError(_("A conta bancária selecionada não está associada a um Diário. Verifique a configuração do Banco Destinatário."))
+                raise UserError(_("A conta bancária selecionada não está associada a um Diário. Verifique a configuração em 'Faturamento > Configuração > Contas Bancárias'."))
             
             # Validações das configurações do diário correto
             if not journal.itau_wallet_code:

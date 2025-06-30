@@ -542,13 +542,13 @@ class BasePaymentItau(models.Model):
             'dado_boleto': {
                 'codigo_carteira': boleto_data.get('codigo_carteira'),
                 'codigo_especie': boleto_data.get('codigo_especie'),
-                'descricao_especie': boleto_data.get('descricao_especie', ''),
-                'descricao_instrumento_cobranca': boleto_data.get('descricao_instrumento_cobranca', 'boleto'),
+                'descricao_especie': boleto_data.get('descricao_especie'),
+                'descricao_instrumento_cobranca': boleto_data.get('descricao_instrumento_cobranca'),
                 'codigo_aceite': boleto_data.get('codigo_aceite', 'S'),
                 'tipo_boleto': boleto_data.get('tipo_boleto', 'proposta'),
-                'data_emissao': boleto_data.get('data_emissao', datetime.now().strftime("%Y-%m-%d")),
+                'data_emissao': boleto_data.get('data_emissao'),
                 'pagador': pagador_data,
-                'dados_individuais_boleto': boleto_data.get('dados_individuais_boleto', []),
+                'dados_individuais_boleto': boleto_data.get('dados_individuais_boleto', [])
             },
             'etapa_processo_boleto': 'validacao',
             'codigo_canal_operacao': 'BKL'
@@ -565,9 +565,15 @@ class BasePaymentItau(models.Model):
         # === ADICIONA INFORMAÇÕES DE DESCONTO (SE CONFIGURADO) ===
         if boleto_data.get('desconto'):
             payload['dado_boleto']['desconto'] = boleto_data['desconto']
-        
+            
+        # === ADICIONA INFORMAÇÕES DE PROTESTO (SE CONFIGURADO) ===
+        if boleto_data.get('protesto'):
+            payload['dado_boleto']['protesto'] = boleto_data['protesto']
+            
+        # === ADICIONA INFORMAÇÕES DE NEGATIVAÇÃO (SE CONFIGURADO) ===
+        if boleto_data.get('negativacao'):
+            payload['dado_boleto']['negativacao'] = boleto_data['negativacao']
 
-        
         # Prepara requisição
         url = self.get_api_url('boletos')
         correlation_id = f"odoo-invoice-{datetime.now().strftime('%Y%m%d%H%M%S')}"

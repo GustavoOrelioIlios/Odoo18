@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- View para o modelo move.boleto -->
+        <record id="view_move_boleto_tree" model="ir.ui.view">
+            <field name="name">move.boleto.tree</field>
+            <field name="model">move.boleto</field>
+            <field name="arch" type="xml">
+                <list string="Boletos">
+                    <field name="id"/>
+                    <field name="data_emissao"/>
+                    <field name="data_limite_pagamento"/>
+                    <field name="l10n_br_is_barcode"/>
+                    <field name="l10n_br_is_barcode_formatted"/>
+                </list>
+            </field>
+        </record>
         
         <!-- Adiciona botão "Emitir Boleto Itaú" na view de fatura -->
         <record id="view_move_form_itau_boleto" model="ir.ui.view">
@@ -38,9 +52,7 @@
                                     class="btn-secondary"
                                     invisible="state != 'posted'"
                                     help="Clique para emitir ou reemitir o boleto Itaú"/>
-
                         </group>
-                        
                         
                         <!-- Mensagem de erro, se houver -->
                         <group string="⚠️ Erro na Emissão" invisible="not itau_boleto_error_message">
@@ -55,28 +67,20 @@
                             <!-- Subsection para Request -->
                             <group string="📤 JSON Enviado (Request)" col="1" invisible="not itau_boleto_json_request">
                                 <field name="itau_boleto_request_formatted" nolabel="1" 
-                                       widget="html" readonly="1"/>
+                                       widget="html"/>
                             </group>
                             
                             <!-- Subsection para Response -->
                             <group string="📥 JSON Recebido (Response)" col="1" invisible="not itau_boleto_json_response">
                                 <field name="itau_boleto_response_formatted" nolabel="1" 
-                                       widget="html" readonly="1"/>
+                                       widget="html"/>
                             </group>
                             
                         </group>
                         
                         <!-- Seção de Boletos Gerados -->
                         <group string="📋 Boletos Gerados" invisible="not boleto_ids">
-                            <field name="boleto_ids" nolabel="1">
-                                <list string="Boletos">
-                                    <field name="itau_boleto_id"/>
-                                    <field name="data_emissao"/>
-                                    <field name="data_limite_pagamento"/>
-                                    <field name="l10n_br_is_barcode"/>
-                                    <field name="l10n_br_is_barcode_formatted"/>
-                                </list>
-                            </field>
+                            <field name="boleto_ids" nolabel="1" view_mode="tree" views="view_move_boleto_tree,form"/>
                         </group>
                         
                         <!-- Instruções caso ainda não tenha sido emitido -->
@@ -92,6 +96,37 @@
                             <small>• Empresa deve ter conta bancária Itaú configurada</small>
                         </div>
                         
+                    </page>
+
+                    <!-- Nova aba para Protesto e Negativação -->
+                    <page string="Protesto e Negativação" 
+                          name="itau_protest_negativation_tab"
+                          invisible="move_type not in ('out_invoice', 'out_refund')">
+                        
+                        <group>
+                            <!-- Grupo de Protesto -->
+                            <group string="⚖️ Protesto" name="protest_group">
+                                <field name="itau_protest_code"/>
+                                <field name="itau_protest_days" 
+                                       invisible="itau_protest_code != '1'"
+                                       required="itau_protest_code == '1'"/>
+                            </group>
+                            
+                            <!-- Grupo de Negativação -->
+                            <group string="📝 Negativação" name="negativation_group">
+                                <field name="itau_negativation_code"/>
+                                <field name="itau_negativation_days" 
+                                       invisible="itau_negativation_code != '2'"
+                                       required="itau_negativation_code == '2'"/>
+                            </group>
+                        </group>
+
+                        <!-- Grupo de Mensagens -->
+                        <group string="💬 Mensagens de Cobrança" name="collection_messages_group">
+                            <field name="collection_messages" nolabel="1" 
+                                   placeholder="Adicione aqui mensagens ou notas relacionadas à cobrança desta fatura..."
+                                   widget="text"/>
+                        </group>
                     </page>
                 </notebook>
             </field>
