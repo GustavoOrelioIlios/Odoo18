@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_base_payment_api_user,access_base_payment_api_user,base_payment_api.model_base_payment_api,base.group_user,1,1,1,1
 access_payment_test_result_wizard_user,access_payment_test_result_wizard_user,base_payment_api.model_payment_test_result_wizard,base.group_user,1,1,1,1
+access_move_boleto_user,access_move_boleto_user,model_move_boleto,account.group_account_invoice,1,1,1,1

@@ -94,8 +94,6 @@
                 <filter string="Ativo" name="active" domain="[('active', '=', True)]"/>
                 <filter string="Arquivado" name="inactive" domain="[('active', '=', False)]"/>
                 <separator/>
-                <filter string="Conexão OK" name="connection_ok" domain="[('connection_status', '=', 'success')]"/>
-                <filter string="Conexão Falhou" name="connection_failed" domain="[('connection_status', '=', 'failed')]"/>
                 <filter string="Não Testado" name="not_tested" domain="[('connection_status', '=', 'not_tested')]"/>
                 <filter string="Sucesso" name="success" domain="[('connection_status', '=', 'success')]"/>
                 <filter string="Falhou" name="failed" domain="[('connection_status', '=', 'failed')]"/>

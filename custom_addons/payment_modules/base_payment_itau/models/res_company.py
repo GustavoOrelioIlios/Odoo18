@@ -22,6 +22,28 @@ class ResCompany(models.Model):
         domain="[('partner_id', '=', partner_id), ('bank_id.name', 'ilike', 'Itaú')]",
         help='Conta bancária desta empresa que contém os dados específicos do Itaú para emissão de boletos'
     )
+
+    # Campos temporários para evitar erro de view
+    itau_client_id = fields.Char(
+        string='Client ID Itaú',
+        related='itau_payment_api_id.client_id',
+        readonly=True,
+        help='Campo temporário para compatibilidade'
+    )
+
+    itau_client_secret = fields.Char(
+        string='Client Secret Itaú',
+        related='itau_payment_api_id.client_secret',
+        readonly=True,
+        help='Campo temporário para compatibilidade'
+    )
+
+    itau_environment = fields.Selection(
+        string='Ambiente Itaú',
+        related='itau_payment_api_id.environment',
+        readonly=True,
+        help='Campo temporário para compatibilidade'
+    )
     
     def get_itau_beneficiario_data(self):
         """

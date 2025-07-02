@@ -1,67 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Lista de Boletos -->
-    <record id="view_move_boleto_tree" model="ir.ui.view">
-        <field name="name">move.boleto.tree</field>
+    <!-- Herança da Lista de Boletos -->
+    <record id="view_move_boleto_tree_itau" model="ir.ui.view">
+        <field name="name">move.boleto.tree.itau</field>
         <field name="model">move.boleto</field>
+        <field name="inherit_id" ref="base_payment_api.view_move_boleto_tree"/>
         <field name="arch" type="xml">
-            <list string="Boletos Bancários">
-                <field name="invoice_id"/>
+            <field name="invoice_id" position="after">
                 <field name="itau_boleto_id"/>
-                <field name="data_emissao"/>
-                <field name="data_limite_pagamento"/>
-                <field name="l10n_br_is_barcode"/>
-                <field name="l10n_br_is_barcode_formatted"/>
-            </list>
+            </field>
         </field>
     </record>
 
-    <!-- Formulário de Boleto -->
-    <record id="view_move_boleto_form" model="ir.ui.view">
-        <field name="name">move.boleto.form</field>
+    <!-- Herança do Formulário de Boleto -->
+    <record id="view_move_boleto_form_itau" model="ir.ui.view">
+        <field name="name">move.boleto.form.itau</field>
         <field name="model">move.boleto</field>
+        <field name="inherit_id" ref="base_payment_api.view_move_boleto_form"/>
         <field name="arch" type="xml">
-            <form string="Boleto Bancário">
-                <sheet>
-                    <group>
-                        <group string="Informações da Fatura">
-                            <field name="invoice_id"/>
-                            <field name="itau_boleto_id"/>
-                        </group>
-                        <group string="Datas">
-                            <field name="data_emissao"/>
-                            <field name="data_limite_pagamento"/>
-                        </group>
-                    </group>
-                    <group string="Códigos do Boleto">
-                        <field name="l10n_br_is_barcode"/>
-                        <field name="l10n_br_is_barcode_formatted"/>
-                    </group>
-                </sheet>
-            </form>
+            <field name="invoice_id" position="after">
+                <field name="itau_boleto_id"/>
+            </field>
         </field>
     </record>
-
-    <!-- Ação do Menu -->
-    <record id="action_move_boleto" model="ir.actions.act_window">
-        <field name="name">Boletos Bancários</field>
-        <field name="res_model">move.boleto</field>
-        <field name="view_mode">list,form</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Crie seu primeiro boleto bancário!
-            </p>
-            <p>
-                Esta tela mostra todos os boletos gerados através da integração com o Itaú.
-            </p>
-        </field>
-    </record>
-
-    <!-- Menu Item -->
-    <menuitem 
-        id="menu_move_boleto"
-        name="Boletos Bancários"
-        parent="account.menu_finance_receivables"
-        action="action_move_boleto"
-        sequence="10"/>
 </odoo> 

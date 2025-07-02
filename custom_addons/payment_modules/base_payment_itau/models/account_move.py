@@ -457,6 +457,15 @@ class AccountMove(models.Model):
         """Obtém dados do boleto a partir da fatura"""
         self.ensure_one()
         
+        # Garante que o "Nosso Número" seja gerado ANTES de montar o payload
+        if not self.l10n_br_is_own_number:
+            # Gera um novo número da sequência se ele ainda não existir na fatura
+            nosso_numero_gerado = self.env['ir.sequence'].next_by_code('itau.nosso.numero')
+            if not nosso_numero_gerado:
+                raise UserError(_("A sequência para 'Nosso Número' (itau.nosso.numero) não pôde ser gerada. Verifique as configurações da sequência."))
+            # Grava o número gerado na fatura para consistência
+            self.l10n_br_is_own_number = nosso_numero_gerado
+        
         # Obtém dados básicos do boleto
         boleto_data = {
             'codigo_carteira': self.partner_bank_id.journal_id.itau_wallet_code or '109',
@@ -473,7 +482,7 @@ class AccountMove(models.Model):
                 'data_vencimento': self.invoice_date_due.strftime('%Y-%m-%d'),
                 'data_limite_pagamento': self.invoice_date_due.strftime('%Y-%m-%d'),
                 'id_boleto_individual': str(uuid.uuid4()),
-                'numero_nosso_numero': self.l10n_br_is_own_number or '',
+                'numero_nosso_numero': self.l10n_br_is_own_number,  # Agora garantimos que este valor existe
                 'texto_seu_numero': f"NFe {self.name}" if self.name else '',
                 'texto_uso_beneficiario': None
             }]
@@ -523,11 +532,6 @@ class AccountMove(models.Model):
         # Verifica se a resposta indica sucesso
         if response_data.get('etapa_processo_boleto') == 'efetivacao':
             
-            # Gera o "Nosso Número" se ainda não existir
-            if not self.l10n_br_is_own_number:
-                own_number = self.env['ir.sequence'].next_by_code('itau.nosso.numero')
-                self.write({'l10n_br_is_own_number': own_number})
-
             # Extrai dados do boleto da resposta
             dados_boleto_individual = response_data.get('dados_individuais_boleto', [{}])[0]
 
@@ -537,6 +541,7 @@ class AccountMove(models.Model):
                 'l10n_br_is_barcode': dados_boleto_individual.get('codigo_barras', ''),
                 'l10n_br_is_barcode_formatted': dados_boleto_individual.get('numero_linha_digitavel', ''),
                 'data_limite_pagamento': dados_boleto_individual.get('data_limite_pagamento') or self.invoice_date_due,
+                'l10n_br_is_own_number': self.l10n_br_is_own_number,
                 # A data de emissão já tem default no modelo, então não é obrigatória aqui
             }
             
@@ -582,10 +587,6 @@ class AccountMove(models.Model):
                 raise UserError(_("Configure o 'Código da Carteira' no diário do banco (%s).") % journal.name)
             if not journal.l10n_br_is_payment_mode_id:
                 raise UserError(_("Configure a 'Espécie do Título' no diário do banco (%s).") % journal.name)
-            
-            if not move.l10n_br_is_own_number:
-                own_number = self.env['ir.sequence'].next_by_code('itau.nosso.numero')
-                move.write({'l10n_br_is_own_number': own_number})
             
             # Chama a função principal de emissão de boleto
             move.action_emitir_boleto_itau()
