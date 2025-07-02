@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_company_form_inherit_sicoob" model="ir.ui.view">
+        <field name="name">res.company.form.inherit.sicoob</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Configurações Sicoob" name="sicoob_settings">
+                    <group>
+                        <group string="Configurações Bancárias">
+                            <field name="sicoob_partner_bank_id" 
+                                   domain="[('partner_id', '=', partner_id), ('bank_id.name', 'ilike', 'Sicoob')]"
+                                   context="{'default_bank_id': False}"
+                                   options="{'no_create': True, 'no_create_edit': True}"/>
+                        </group>
+                        <group string="Configurações API">
+                            <field name="sicoob_payment_api_id" 
+                                   domain="[('integracao', '=', 'sicoob_boleto')]"
+                                   context="{'default_integracao': 'sicoob_boleto'}"
+                                   options="{'no_create': True, 'no_create_edit': True}"/>
+                        </group>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo> 

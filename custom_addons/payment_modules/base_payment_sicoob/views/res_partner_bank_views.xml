@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Adiciona campo de número do cliente Sicoob na conta bancária -->
+        <record id="view_partner_bank_form_inherit_sicoob" model="ir.ui.view">
+            <field name="name">res.partner.bank.form.inherit.sicoob</field>
+            <field name="model">res.partner.bank</field>
+            <field name="inherit_id" ref="base.view_partner_bank_form"/>
+            <field name="arch" type="xml">
+                <!-- Adiciona campo de número do cliente Sicoob -->
+                <xpath expr="//group" position="inside">
+                    <group string="Configurações Sicoob" name="sicoob_settings">
+                        <field name="sicoob_client_number" placeholder="Ex.: 123456789"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Adiciona campo de número do cliente Sicoob na tree view -->
+        <record id="view_partner_bank_tree_inherit_sicoob" model="ir.ui.view">
+            <field name="name">res.partner.bank.tree.inherit.sicoob</field>
+            <field name="model">res.partner.bank</field>
+            <field name="inherit_id" ref="base.view_partner_bank_tree"/>
+            <field name="arch" type="xml">
+                <field name="acc_number" position="after">
+                    <field name="sicoob_client_number" optional="show"/>
+                </field>
+            </field>
+        </record>
+    </data>
+</odoo> 

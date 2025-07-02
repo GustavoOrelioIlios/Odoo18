@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="seq_sicoob_own_number" model="ir.sequence">
+        <field name="name">Sicoob Nosso Número Sequence</field>
+        <field name="code">sicoob.nosso.numero</field>
+        <field name="prefix"></field>
+        <field name="padding">8</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo> 

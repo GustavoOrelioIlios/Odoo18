@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Adiciona botão "Emitir Boleto Sicoob" no cabeçalho da fatura -->
+        <record id="view_move_form_inherit_sicoob" model="ir.ui.view">
+            <field name="name">account.move.form.inherit.sicoob</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+                <!-- Adiciona botão no header -->
+                <xpath expr="//header" position="inside">
+                    <button name="action_emitir_boleto_sicoob"
+                            type="object"
+                            string="Emitir Boleto Sicoob"
+                            class="oe_highlight"
+                            invisible="state != 'posted' or payment_state in ['paid', 'in_payment'] or move_type not in ['out_invoice', 'out_refund'] or not journal_id"/>
+                </xpath>
+
+                <!-- Adiciona aba "Boleto Sicoob" -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Sicoob" name="sicoob_page" invisible="move_type not in ['out_invoice', 'out_refund']">
+                        <group>
+                            <group string="Dados do Boleto">
+                                <field name="sicoob_contract_number"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo> 

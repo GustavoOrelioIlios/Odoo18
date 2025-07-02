@@ -84,24 +84,27 @@
         <field name="name">base.payment.api.search</field>
         <field name="model">base.payment.api</field>
         <field name="arch" type="xml">
-            <search string="Configurações de API de Pagamento">
+            <search string="Pesquisar Configurações">
                 <field name="name"/>
                 <field name="bank_id"/>
                 <field name="integracao"/>
-                <filter string="Ativo" name="active" domain="[('active', '=', True)]"/>
-                <filter string="Inativo" name="inactive" domain="[('active', '=', False)]"/>
+                <field name="environment"/>
+                <field name="company_id" groups="base.group_multi_company"/>
                 <separator/>
-                <filter string="Sandbox" name="sandbox" domain="[('environment', '=', 'sandbox')]"/>
-                <filter string="Produção" name="production" domain="[('environment', '=', 'production')]"/>
+                <filter string="Ativo" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Arquivado" name="inactive" domain="[('active', '=', False)]"/>
                 <separator/>
                 <filter string="Conexão OK" name="connection_ok" domain="[('connection_status', '=', 'success')]"/>
                 <filter string="Conexão Falhou" name="connection_failed" domain="[('connection_status', '=', 'failed')]"/>
                 <filter string="Não Testado" name="not_tested" domain="[('connection_status', '=', 'not_tested')]"/>
+                <filter string="Sucesso" name="success" domain="[('connection_status', '=', 'success')]"/>
+                <filter string="Falhou" name="failed" domain="[('connection_status', '=', 'failed')]"/>
                 <group expand="0" string="Agrupar Por">
-                    <filter string="Banco" name="group_bank" context="{'group_by': 'bank_id'}"/>
-                    <filter string="Integração" name="group_integration" context="{'group_by': 'integracao'}"/>
-                    <filter string="Ambiente" name="group_environment" context="{'group_by': 'environment'}"/>
-                    <filter string="Status" name="group_status" context="{'group_by': 'connection_status'}"/>
+                    <filter string="Banco" name="bank" context="{'group_by': 'bank_id'}"/>
+                    <filter string="Integração" name="integration" context="{'group_by': 'integracao'}"/>
+                    <filter string="Ambiente" name="environment" context="{'group_by': 'environment'}"/>
+                    <filter string="Status da Conexão" name="connection_status" context="{'group_by': 'connection_status'}"/>
+                    <filter string="Empresa" name="company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
                 </group>
             </search>
         </field>
@@ -113,13 +116,13 @@
         <field name="res_model">base.payment.api</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_base_payment_api_search"/>
+        <field name="context">{'search_default_active': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Crie sua primeira configuração de API de pagamento!
             </p>
             <p>
-                Configure as credenciais e parâmetros de conexão para integrar
-                com diferentes bancos e suas APIs de pagamento.
+                Configure as integrações com APIs de pagamento dos bancos.
             </p>
         </field>
     </record>

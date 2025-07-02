@@ -31,7 +31,7 @@ class BasePaymentAPI(models.Model):
     )
     
     integracao = fields.Selection(
-        selection=[],  # Será populado dinamicamente pelos módulos específicos
+        selection=[],  # Será populado pelos módulos específicos usando selection_add
         string='Tipo de Integração', 
         required=True, 
         help='Tipo de integração de pagamento',
@@ -59,7 +59,7 @@ class BasePaymentAPI(models.Model):
     
     client_secret = fields.Char(
         string='Client Secret',
-        required=True,
+        required=False,
         help='Chave secreta fornecida pelo banco'
     )
     
@@ -106,6 +106,14 @@ class BasePaymentAPI(models.Model):
             if record.timeout <= 0:
                 raise ValidationError(_('O timeout deve ser maior que zero'))
 
+    @api.onchange('integracao')
+    def _onchange_integracao(self):
+        """Atualiza campos baseado no tipo de integração"""
+        if self.integracao:
+            # Reseta campos sensíveis ao mudar integração
+            self.client_id = False
+            self.client_secret = False
+            self.base_url = False
 
     def testar_token(self):
         """Método genérico para testar token - será sobrescrito pelos módulos específicos"""

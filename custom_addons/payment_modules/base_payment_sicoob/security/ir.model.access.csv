@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_base_payment_sicoob_user,base.payment.sicoob.user,base_payment_api.model_base_payment_api,base.group_user,1,0,0,0
+access_base_payment_sicoob_manager,base.payment.sicoob.manager,base_payment_api.model_base_payment_api,account.group_account_manager,1,1,1,1
