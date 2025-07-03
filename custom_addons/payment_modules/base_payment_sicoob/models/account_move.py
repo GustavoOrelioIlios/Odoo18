@@ -16,14 +16,34 @@ class AccountMove(models.Model):
         copy=False
     )
 
+    sicoob_nosso_numero = fields.Char(
+        string='Nosso Número (Sicoob)',
+        help='Número que identifica o boleto de cobrança no Sisbr',
+        copy=False,
+        readonly=True
+    )
+
+    sicoob_payment_limit_date = fields.Date(
+        string='Data Limite para Pagamento (Sicoob)',
+        help='Data limite para pagamento do boleto. Se não informada, será igual à data de vencimento',
+        copy=False
+    )
+
+    sicoob_especie_documento = fields.Selection(
+        related='journal_id.sicoob_especie_documento',
+        string='Espécie do Documento (Sicoob)',
+        help='Espécie do documento para boletos Sicoob',
+        readonly=True
+    )
+
     test_json_enviado = fields.Text(
-        string='JSON Enviado',
+        string='JSON Enviado (Sicoob)',
         help='JSON enviado para a API do Sicoob',
         copy=False
     )
 
     test_json_retorno = fields.Text(
-        string='JSON Retornado',
+        string='JSON Retornado (Sicoob)',
         help='JSON retornado pela API do Sicoob',
         copy=False
     )
@@ -176,75 +196,58 @@ class AccountMove(models.Model):
             raise UserError(_('A conta bancária não tem um número de cliente Sicoob configurado. Configure em:\nConfigurações → Empresas → %s → Configurações Sicoob → Conta Bancária Sicoob → Número do Cliente Sicoob') % self.company_id.name)
 
         # Obtém o nosso número
-        nosso_numero = int(self.env['ir.sequence'].next_by_code('sicoob.nosso.numero'))
-        _logger.info("[Sicoob] Nosso número gerado: %s", nosso_numero)
+        if not self.sicoob_nosso_numero:
+            nosso_numero = self.env['ir.sequence'].next_by_code('sicoob.nosso.numero')
+            self.sicoob_nosso_numero = nosso_numero
+        else:
+            nosso_numero = self.sicoob_nosso_numero
+        _logger.info("[Sicoob] Nosso número: %s", nosso_numero)
 
         # Calcula datas
         data_emissao = self.invoice_date or fields.Date.today()
-        data_vencimento = self.invoice_date_due or (data_emissao + timedelta(days=30))
-        data_limite = data_vencimento  # Por padrão, igual ao vencimento
-        data_multa = data_vencimento + timedelta(days=1)  # 1 dia após vencimento
-        data_juros = data_vencimento + timedelta(days=1)  # 1 dia após vencimento
-        data_desconto = data_vencimento - timedelta(days=5)
+        data_vencimento = self.invoice_date_due or data_emissao
+        data_limite = self.sicoob_payment_limit_date or data_vencimento
 
-        _logger.info("[Sicoob] Datas do boleto:")
-        _logger.info("- Emissão: %s", data_emissao)
-        _logger.info("- Vencimento: %s", data_vencimento)
-        _logger.info("- Limite: %s", data_limite)
-        _logger.info("- Multa: %s", data_multa)
-        _logger.info("- Juros: %s", data_juros)
-        _logger.info("- Desconto: %s", data_desconto)
+        # Limpa o número da conta corrente (apenas dígitos)
+        numero_conta = ''.join(filter(str.isdigit, bank_account.acc_number or ''))
+        if not numero_conta:
+            raise UserError(_('A conta bancária não tem um número de conta válido.'))
 
-        # Monta o payload completo
-        payload = {
-            'numeroCliente': int(bank_account.sicoob_client_number),
-            'codigoModalidade': 1,  # SIMPLES COM REGISTRO
-            'numeroContaCorrente': int(bank_account.acc_number or 0),
-            'codigoEspecieDocumento': 'DM',  # Duplicata Mercantil
-            'dataEmissao': data_emissao.isoformat(),  # Converte para string ISO
+        # Limpa o número do cliente (apenas dígitos)
+        numero_cliente = ''.join(filter(str.isdigit, bank_account.sicoob_client_number or ''))
+        if not numero_cliente:
+            raise UserError(_('O número do cliente Sicoob deve conter apenas dígitos.'))
+
+        # Limpa o número do contrato (apenas dígitos)
+        numero_contrato = None
+        if self.sicoob_contract_number:
+            numero_contrato = ''.join(filter(str.isdigit, self.sicoob_contract_number))
+            if numero_contrato:
+                numero_contrato = int(numero_contrato)
+
+        # Monta o dicionário de dados do boleto
+        boleto_data = {
             'nossoNumero': nosso_numero,
             'seuNumero': self.name or '',  # Número da fatura
-            'identificacaoBoletoEmpresa': self.ref or str(self.id),  # Referência externa ou ID
-            'identificacaoEmissaoBoleto': 1,  # Banco Emite
-            'identificacaoDistribuicaoBoleto': 1,  # Banco Distribui
-            'valor': float(self.amount_residual),
-            'dataVencimento': data_vencimento.isoformat(),  # Converte para string ISO
-            'dataLimitePagamento': data_limite.isoformat(),  # Converte para string ISO
-            'valorAbatimento': 0.0,
-            'tipoDesconto': 1,  # Valor Fixo até a Data Informada
-            'dataPrimeiroDesconto': data_desconto.isoformat(),  # Converte para string ISO
-            'valorPrimeiroDesconto': 0.0,
-            'dataSegundoDesconto': None,
-            'valorSegundoDesconto': None,
-            'dataTerceiroDesconto': None,
-            'valorTerceiroDesconto': None,
-            'tipoMulta': 1,  # Valor Fixo
-            'dataMulta': data_multa.isoformat(),  # Converte para string ISO
-            'valorMulta': float(self.amount_residual * 0.02),  # 2% de multa
-            'tipoJurosMora': 1,  # Valor Fixo
-            'dataJurosMora': data_juros.isoformat(),  # Converte para string ISO
-            'valorJurosMora': float(self.amount_residual * 0.001),
-            'numeroParcela': 1,  # Parcela única
-            'aceite': True,
-            'codigoNegativacao': None,  # Sem negativação
-            'numeroDiasNegativacao': None,
-            'codigoProtesto': None,  # Sem protesto
-            'numeroDiasProtesto': None,
+            'valor': float(self.amount_total),
+            'dataEmissao': data_emissao.strftime('%Y-%m-%d'),
+            'dataVencimento': data_vencimento.strftime('%Y-%m-%d'),
+            'dataLimitePagamento': data_limite.strftime('%Y-%m-%d'),
+            'codigoEspecieDocumento': self.journal_id.sicoob_especie_documento,
+            'numeroCliente': int(numero_cliente),
+            'codigoModalidade': int(self.journal_id.sicoob_modality_code or '1'),
+            'numeroContaCorrente': int(numero_conta),
             'pagador': pagador_data,
             'beneficiarioFinal': beneficiario_final_data,
+            'aceite': True,  # Por padrão, aceite é True
             'mensagensInstrucao': [
-                'Após vencimento cobrar multa de 2%',
-                'Após vencimento cobrar juros de 0,1% ao dia',
-                'Não receber após 30 dias de vencido'
-            ],
-            'gerarPdf': True,  # Gerar PDF do boleto
-            'rateioCreditos': None,  # Sem rateio de créditos
-            'codigoCadastrarPIX': None,  # Sem PIX
-            'numeroContratoCobranca': int(self.sicoob_contract_number) if self.sicoob_contract_number else None
+                'Não receber após o vencimento',
+                f'Boleto referente à fatura {self.name}'
+            ] if self.name else None,
+            'numeroContratoCobranca': numero_contrato
         }
 
-        _logger.info("[Sicoob] Payload montado com sucesso para fatura %s", self.name)
-        return payload
+        return boleto_data
 
     def action_emitir_boleto_sicoob(self):
         """Emite um boleto Sicoob para a fatura atual"""

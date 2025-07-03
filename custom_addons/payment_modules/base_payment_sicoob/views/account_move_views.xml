@@ -22,6 +22,20 @@
                         <group>
                             <group string="Dados do Boleto">
                                 <field name="sicoob_contract_number"/>
+                                <field name="sicoob_nosso_numero"/>
+                                <field name="sicoob_payment_limit_date"/>
+                                <field name="sicoob_especie_documento"/>
+                                <field name="sicoob_status"/>
+                                <field name="sicoob_date"/>
+                                <field name="sicoob_error_message" invisible="sicoob_status != 'error'"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="JSON Enviado">
+                                <field name="test_json_enviado" widget="ace" options="{'language': 'json'}" readonly="1"/>
+                            </group>
+                            <group string="JSON Retornado">
+                                <field name="test_json_retorno" widget="ace" options="{'language': 'json'}" readonly="1"/>
                             </group>
                         </group>
                     </page>

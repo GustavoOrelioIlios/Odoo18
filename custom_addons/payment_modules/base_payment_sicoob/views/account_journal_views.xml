@@ -12,8 +12,8 @@
                     <group string="Configurações Sicoob" name="sicoob_settings"
                            invisible="type != 'bank'">
                         <field name="bank_account_id"/>
-                        <field name="sicoob_modality_code" 
-                               required="type == 'bank'"/>
+                        <field name="sicoob_modality_code"/>
+                        <field name="sicoob_especie_documento"/>
                     </group>
                 </xpath>
             </field>

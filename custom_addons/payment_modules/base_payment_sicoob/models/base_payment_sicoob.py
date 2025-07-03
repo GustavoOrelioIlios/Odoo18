@@ -96,28 +96,29 @@ class BasePaymentSicoob(models.Model):
             # Coleta todos os dados necessários para o boleto
             payload_data = invoice._get_sicoob_boleto_details_data()
 
-            # Valida os dados usando o Pydantic
-            validador = SicoobBoletoValidator()
-            sucesso, dados_validados, erros = validador.validar_payload(payload_data)
+            # Log para debug da espécie do documento
+            _logger.info("[Sicoob] Espécie do documento configurada no diário: %s", invoice.journal_id.sicoob_especie_documento)
+            _logger.info("[Sicoob] Espécie do documento no payload: %s", payload_data.get('codigoEspecieDocumento'))
 
-            # Salva o JSON enviado (mesmo antes da validação para debug inicial)
-            invoice.test_json_enviado = json.dumps(payload_data, indent=2, ensure_ascii=False)
-
+            # Valida os dados usando o modelo Pydantic
+            sucesso, dados_validados, mensagem = SicoobBoletoValidator.validar_payload(payload_data)
             if not sucesso:
-                mensagem_erros = validador.formatar_erros_para_exibicao(erros)
-                invoice.write({
-                    'sicoob_status': 'error',
-                    'sicoob_date': fields.Datetime.now(),
-                    'sicoob_error_message': mensagem_erros,
-                })
-                _logger.error("Erro de validação Pydantic para boleto Sicoob da fatura %s:\n%s", invoice.name, mensagem_erros)
-                raise UserError(_("Dados do boleto Sicoob inválidos. Verifique a aba 'Boleto Sicoob' na fatura para detalhes."))
+                raise UserError(_(
+                    "Erros de validação encontrados:\n%s"
+                ) % mensagem)
+
+            _logger.info("[Sicoob] Espécie do documento após validação: %s", dados_validados.get('codigoEspecieDocumento'))
+
+            # Salva o JSON enviado para debug
+            invoice.write({
+                'test_json_enviado': json.dumps(dados_validados, indent=2, ensure_ascii=False)
+            })
 
             # Determina a URL da API baseado no ambiente
             if self.environment == 'sandbox':
-                api_url = 'https://sandbox.sicoob.com.br/cobranca-bancaria/v2/boletos'
+                api_url = 'https://sandbox.sicoob.com.br/cobranca-bancaria/v3/boletos'
             else:
-                api_url = 'https://api.sicoob.com.br/cobranca-bancaria/v2/boletos'
+                api_url = 'https://api.sicoob.com.br/cobranca-bancaria/v3/boletos'
 
             # Faz a chamada à API
             response = requests.post(

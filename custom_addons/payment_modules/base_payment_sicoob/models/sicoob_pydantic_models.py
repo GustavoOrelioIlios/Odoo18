@@ -44,54 +44,107 @@ class RateioCreditosItemModel(BaseModel):
 
 class SicoobBoletoRequestPayload(BaseModel):
     """Modelo Pydantic principal para requisição de boleto Sicoob"""
+    # Campos obrigatórios conforme especificação
+    dataEmissao: str = Field(
+        ..., 
+        description="Data de emissão do boleto. Caso não seja informado, o sistema atribui a data de registro do boleto no Sisbr. Formato: yyyy-MM-dd"
+    )
+    nossoNumero: str = Field(
+        ..., 
+        description="Número que identifica o boleto de cobrança no Sisbr. Gerado pela sequência do Odoo."
+    )
+    seuNumero: str = Field(
+        ..., 
+        description="Número identificador do boleto no sistema do beneficiário (número da fatura). Tamanho máximo 18"
+    )
+    valor: float = Field(
+        ..., 
+        gt=0, 
+        description="Valor nominal do boleto"
+    )
+    dataVencimento: str = Field(
+        ..., 
+        description="Data de vencimento do boleto. Formato: yyyy-MM-dd"
+    )
+    dataLimitePagamento: str = Field(
+        ..., 
+        description="Data limite para pagamento do boleto. Formato: yyyy-MM-dd"
+    )
+    aceite: bool = Field(
+        True, 
+        description="Identificador do aceite do boleto"
+    )
+    codigoEspecieDocumento: str = Field(
+        ..., 
+        description="Espécie do Documento. Ex: DM (Duplicata Mercantil), DS (Duplicata de Serviço), etc."
+    )
+    
+    # Campos adicionais necessários para o Sicoob
     numeroCliente: int = Field(..., description="Número do cliente no Sicoob")
     codigoModalidade: int = Field(..., description="Código da modalidade de cobrança")
     numeroContaCorrente: int = Field(..., description="Número da conta corrente")
-    codigoEspecieDocumento: str = Field(..., description="Código da espécie do documento")
-    dataEmissao: str = Field(..., description="Data de emissão")
-    nossoNumero: int = Field(..., description="Nosso número")
-    seuNumero: str = Field(..., description="Seu número")
-    identificacaoBoletoEmpresa: str = Field(..., description="Identificação do boleto na empresa")
-    identificacaoEmissaoBoleto: int = Field(..., description="Identificação da emissão do boleto")
-    identificacaoDistribuicaoBoleto: int = Field(..., description="Identificação da distribuição do boleto")
-    valor: float = Field(..., gt=0, description="Valor do boleto")
-    dataVencimento: str = Field(..., description="Data de vencimento")
-    dataLimitePagamento: str = Field(..., description="Data limite para pagamento")
-    valorAbatimento: float = Field(..., description="Valor do abatimento")
-    tipoDesconto: int = Field(..., description="Tipo do desconto")
-    dataPrimeiroDesconto: str = Field(..., description="Data do primeiro desconto")
-    valorPrimeiroDesconto: float = Field(..., description="Valor do primeiro desconto")
-    dataSegundoDesconto: Optional[str] = Field(None, description="Data do segundo desconto")
-    valorSegundoDesconto: Optional[float] = Field(None, description="Valor do segundo desconto")
-    dataTerceiroDesconto: Optional[str] = Field(None, description="Data do terceiro desconto")
-    valorTerceiroDesconto: Optional[float] = Field(None, description="Valor do terceiro desconto")
-    tipoMulta: int = Field(..., description="Tipo da multa")
-    dataMulta: str = Field(..., description="Data da multa")
-    valorMulta: float = Field(..., description="Valor da multa")
-    tipoJurosMora: int = Field(..., description="Tipo dos juros de mora")
-    dataJurosMora: str = Field(..., description="Data dos juros de mora")
-    valorJurosMora: float = Field(..., description="Valor dos juros de mora")
-    numeroParcela: int = Field(..., description="Número da parcela")
-    aceite: bool = Field(..., description="Aceite do boleto")
-    codigoNegativacao: Optional[int] = Field(None, description="Código de negativação")
-    numeroDiasNegativacao: Optional[int] = Field(None, description="Número de dias para negativação")
-    codigoProtesto: Optional[int] = Field(None, description="Código de protesto")
-    numeroDiasProtesto: Optional[int] = Field(None, description="Número de dias para protesto")
     pagador: PagadorModel = Field(..., description="Dados do pagador")
     beneficiarioFinal: Optional[BeneficiarioFinalModel] = Field(None, description="Dados do beneficiário final")
+    
+    # Campos opcionais para configurações adicionais
     mensagensInstrucao: Optional[List[str]] = Field(None, description="Mensagens de instrução")
-    gerarPdf: bool = Field(False, description="Gerar PDF do boleto")
-    rateioCreditos: Optional[List[RateioCreditosItemModel]] = Field(None, description="Dados do rateio de créditos")
-    codigoCadastrarPIX: Optional[int] = Field(None, description="Código para cadastrar PIX")
     numeroContratoCobranca: Optional[int] = Field(None, description="Número do contrato de cobrança")
 
     model_config = ConfigDict(populate_by_name=True, extra='forbid', str_strip_whitespace=True)
 
-    @field_validator('dataEmissao', 'dataVencimento', 'dataLimitePagamento', 'dataPrimeiroDesconto', 'dataSegundoDesconto', 'dataTerceiroDesconto', 'dataMulta', 'dataJurosMora')
+    @field_validator('dataEmissao', 'dataVencimento', 'dataLimitePagamento')
     def validate_date(cls, v):
         """Valida e formata as datas"""
         if isinstance(v, date):
             return v.isoformat()
+        return v
+
+    @field_validator('seuNumero')
+    def validate_seu_numero(cls, v):
+        """Valida o tamanho do seu número"""
+        if len(v) > 18:
+            raise ValueError("seuNumero não pode ter mais de 18 caracteres")
+        return v
+
+    @field_validator('codigoEspecieDocumento')
+    def validate_especie_documento(cls, v):
+        """Valida o código da espécie do documento"""
+        especies_validas = {
+            'CH': 'Cheque',
+            'DM': 'Duplicata Mercantil',
+            'DMI': 'Duplicata Mercantil p/ Indicação',
+            'DS': 'Duplicata de Serviço',
+            'DSI': 'Duplicata de Serviço p/ Indicação',
+            'DR': 'Duplicata Rural',
+            'LC': 'Letra de Câmbio',
+            'NCC': 'Nota de Crédito Comercial',
+            'NCE': 'Nota de Crédito a Exportação',
+            'NCI': 'Nota de Crédito Industrial',
+            'NCR': 'Nota de Crédito Rural',
+            'NP': 'Nota Promissória',
+            'NPR': 'Nota Promissória Rural',
+            'TM': 'Triplicata Mercantil',
+            'TS': 'Triplicata de Serviço',
+            'NS': 'Nota de Seguro',
+            'RC': 'Recibo',
+            'FAT': 'Fatura',
+            'ND': 'Nota de Débito',
+            'AP': 'Apólice de Seguro',
+            'ME': 'Mensalidade Escolar',
+            'PC': 'Parcela de Consórcio',
+            'NF': 'Nota Fiscal',
+            'DD': 'Documento de Dívida',
+            'CPR': 'Cédula de Produto Rural',
+            'WR': 'Warrant',
+            'DAE': 'Dívida Ativa de Estado',
+            'DAM': 'Dívida Ativa de Município',
+            'DAU': 'Dívida Ativa da União',
+            'EC': 'Encargos Condominiais',
+            'CPS': 'Conta de Prestação de Serviços',
+            'OUT': 'Outros'
+        }
+        if v not in especies_validas:
+            raise ValueError(f"Espécie de documento inválida. Valores válidos: {', '.join(especies_validas.keys())}")
         return v
 
 class SicoobBoletoValidator:
