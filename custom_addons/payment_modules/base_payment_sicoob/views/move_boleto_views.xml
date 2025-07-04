@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Herança da Lista de Boletos -->
+    <record id="view_move_boleto_tree_sicoob" model="ir.ui.view">
+        <field name="name">move.boleto.tree.sicoob</field>
+        <field name="model">move.boleto</field>
+        <field name="inherit_id" ref="base_payment_api.view_move_boleto_tree"/>
+        <field name="arch" type="xml">
+            <field name="invoice_id" position="after">
+                <field name="sicoob_company_boleto_id"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Herança do Formulário de Boleto -->
+    <record id="view_move_boleto_form_sicoob" model="ir.ui.view">
+        <field name="name">move.boleto.form.sicoob</field>
+        <field name="model">move.boleto</field>
+        <field name="inherit_id" ref="base_payment_api.view_move_boleto_form"/>
+        <field name="arch" type="xml">
+            <field name="invoice_id" position="after">
+                <field name="sicoob_company_boleto_id"/>
+            </field>
+        </field>
+    </record>
+</odoo> 

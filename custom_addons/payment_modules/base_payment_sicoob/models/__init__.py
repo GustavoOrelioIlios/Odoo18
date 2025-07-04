@@ -9,3 +9,4 @@ from . import res_company
 from . import res_partner
 from . import account_payment_term
 from . import account_payment_term_sicoob_discount 
+from . import move_boleto 

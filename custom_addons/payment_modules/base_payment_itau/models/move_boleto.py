@@ -5,6 +5,7 @@ import uuid
 
 class MoveBoletoItau(models.Model):
     _inherit = 'move.boleto'
+    _description = 'Registro de Boleto Bancário - Itaú'
 
     # Relacionamento com a Fatura
     invoice_id = fields.Many2one(
@@ -21,7 +22,7 @@ class MoveBoletoItau(models.Model):
         default=lambda self: str(uuid.uuid4()),
         index=True,
         readonly=True,
-        help="ID único do boleto gerado pela API do Itaú ou um hash local."
+        help="ID único retornado pela API do Itaú ou um hash local para referência."
     )
 
     # Código de Barras e Linha Digitável

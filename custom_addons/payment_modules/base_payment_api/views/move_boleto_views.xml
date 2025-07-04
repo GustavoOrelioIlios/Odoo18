@@ -9,6 +9,7 @@
                 <field name="invoice_id"/>
                 <field name="data_emissao"/>
                 <field name="data_limite_pagamento"/>
+                <field name="l10n_br_is_own_number"/>
                 <field name="l10n_br_is_barcode"/>
                 <field name="l10n_br_is_barcode_formatted"/>
             </list>
@@ -32,6 +33,7 @@
                         </group>
                     </group>
                     <group string="Códigos do Boleto">
+                        <field name="l10n_br_is_own_number"/>
                         <field name="l10n_br_is_barcode"/>
                         <field name="l10n_br_is_barcode_formatted"/>
                     </group>

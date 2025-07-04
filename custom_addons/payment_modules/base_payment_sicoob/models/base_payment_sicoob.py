@@ -144,6 +144,14 @@ class BasePaymentSicoob(models.Model):
                     'sicoob_error_message': False,
                 })
                 _logger.info("Boleto Sicoob emitido com sucesso para fatura %s", invoice.name)
+
+                # Processa a resposta e cria o registro move.boleto
+                if response_json and response_json.get('resultado'):
+                    invoice._create_boleto_record_from_sicoob_api_response(response_json.get('resultado'))
+                else:
+                    # Fallback para o caso de a chave 'resultado' não estar presente
+                    invoice._create_boleto_record_from_sicoob_api_response(response_json)
+                
                 return response_json
             else:
                 error_msg = f"Erro API Sicoob (Status: {response.status_code}): {response.text[:500]}..."

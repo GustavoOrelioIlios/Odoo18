@@ -1,43 +1,49 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api
-import uuid
+from odoo import models, fields
 
 class MoveBoleto(models.Model):
     _name = 'move.boleto'
-    _description = 'Registro de Boleto Bancário'
+    _description = 'Registro de Boleto Bancário Genérico'
+    _order = 'invoice_id, data_emissao desc'
 
-    # Relacionamento com a Fatura
+    # --- Campos Genéricos ---
+
     invoice_id = fields.Many2one(
         'account.move',
         string='Fatura',
         required=True,
-        ondelete='cascade'
+        ondelete='cascade',
+        index=True,
+        help="Fatura de origem à qual este boleto está vinculado."
     )
-
-    # Código de Barras e Linha Digitável
-    l10n_br_is_barcode = fields.Char(
-        string='Código de Barras',
-        copy=False
+    data_emissao = fields.Date(
+        string='Data de Emissão',
+        related='invoice_id.invoice_date',
+        store=True,
+        readonly=True,
+        help="Data de emissão da fatura, usada como data de emissão do boleto."
     )
-    l10n_br_is_barcode_formatted = fields.Char(
-        string='Linha Digitável',
-        copy=False
+    data_limite_pagamento = fields.Date(
+        string='Data Limite para Pagamento',
+        related='invoice_id.invoice_date_due',
+        store=True,
+        readonly=True,
+        help="Data de vencimento da fatura, usada como data limite para pagamento."
     )
-
-    # Nosso Número
     l10n_br_is_own_number = fields.Char(
         string='Nosso Número',
         copy=False,
         readonly=True,
-        help="Nosso Número do boleto."
+        help="Nosso Número, o identificador único do boleto no banco."
     )
-
-    # Datas
-    data_emissao = fields.Date(
-        string='Data de Emissão do Boleto',
-        default=fields.Date.context_today
+    l10n_br_is_barcode = fields.Char(
+        string='Código de Barras',
+        copy=False,
+        readonly=True
     )
-    data_limite_pagamento = fields.Date(
-        string='Data Limite para Pagamento'
+    l10n_br_is_barcode_formatted = fields.Char(
+        string='Linha Digitável',
+        copy=False,
+        readonly=True
     ) 

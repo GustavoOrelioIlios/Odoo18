@@ -32,6 +32,7 @@
         'views/account_move_views.xml',
         'views/base_payment_sicoob_views.xml',
         'views/res_company_views.xml',
+        'views/move_boleto_views.xml',
         'data/ir_sequence_data.xml',
     ],
     'installable': True,

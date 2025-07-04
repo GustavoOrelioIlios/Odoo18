@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- View para a aba Dados Pagamento -->
+        <record id="view_move_form_itau_dados_pagamento" model="ir.ui.view">
+            <field name="name">account.move.form.itau.dados.pagamento</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="base_payment_api.view_move_form_dados_pagamento_tab"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='dados_pagamento']/group" position="inside">
+                    <group string="Itaú">
+                        <field name="l10n_br_is_own_number" readonly="1"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
         <!-- View para o modelo move.boleto -->
         <record id="view_move_boleto_tree" model="ir.ui.view">
             <field name="name">move.boleto.tree</field>
@@ -16,14 +30,13 @@
             </field>
         </record>
         
-        <!-- Adiciona botão "Emitir Boleto Itaú" na view de fatura -->
+        <!-- View principal do boleto Itaú -->
         <record id="view_move_form_itau_boleto" model="ir.ui.view">
             <field name="name">account.move.form.itau.boleto</field>
             <field name="model">account.move</field>
             <field name="inherit_id" ref="account.view_move_form"/>
             <field name="arch" type="xml">
                 
-                <!-- Adiciona o botão no header, após os botões existentes -->
                 <xpath expr="//header/button[@name='action_post']" position="after">
                     <button name="action_emitir_boleto_itau" 
                             type="object" 
@@ -33,7 +46,6 @@
                             groups="account.group_account_invoice"/>
                 </xpath>
                 
-                <!-- Adicionar aba "Boleto Itaú" -->
                 <notebook position="inside">
                     <page string="Boleto Itaú" 
                           name="itau_boleto_tab"
@@ -45,7 +57,6 @@
                                    decoration-danger="itau_boleto_status == 'error'"
                                    decoration-muted="itau_boleto_status == 'none'"/>
                             <field name="itau_boleto_date"/>
-                            <field name="l10n_br_is_own_number"/>
                             <button name="action_emitir_boleto_itau" 
                                     string="🔄 Reemitir Boleto" 
                                     type="object" 
@@ -54,23 +65,19 @@
                                     help="Clique para emitir ou reemitir o boleto Itaú"/>
                         </group>
                         
-                        <!-- Mensagem de erro, se houver -->
                         <group string="⚠️ Erro na Emissão" invisible="not itau_boleto_error_message">
                             <field name="itau_boleto_error_message" nolabel="1" 
                                    widget="text" readonly="1"
                                    style="color: #dc3545; font-family: monospace; background: #f8d7da; padding: 10px; border-radius: 5px;"/>
                         </group>
                         
-                        <!-- Seção de JSONs -->
                         <group string="📋 Dados da Comunicação com API" invisible="not itau_boleto_json_request and not itau_boleto_json_response">
                             
-                            <!-- Subsection para Request -->
                             <group string="📤 JSON Enviado (Request)" col="1" invisible="not itau_boleto_json_request">
                                 <field name="itau_boleto_request_formatted" nolabel="1" 
                                        widget="html"/>
                             </group>
                             
-                            <!-- Subsection para Response -->
                             <group string="📥 JSON Recebido (Response)" col="1" invisible="not itau_boleto_json_response">
                                 <field name="itau_boleto_response_formatted" nolabel="1" 
                                        widget="html"/>
@@ -78,12 +85,10 @@
                             
                         </group>
                         
-                        <!-- Seção de Boletos Gerados -->
                         <group string="📋 Boletos Gerados" invisible="not boleto_ids">
                             <field name="boleto_ids" nolabel="1" view_mode="tree" views="view_move_boleto_tree,form"/>
                         </group>
                         
-                        <!-- Instruções caso ainda não tenha sido emitido -->
                         <div invisible="itau_boleto_status != 'none'" 
                              style="text-align: center; padding: 40px; color: #6c757d;">
                             <h3 style="color: #6c757d;">🎫 Emissão de Boleto Itaú</h3>
@@ -98,13 +103,11 @@
                         
                     </page>
 
-                    <!-- Nova aba para Protesto e Negativação -->
                     <page string="Protesto e Negativação" 
                           name="itau_protest_negativation_tab"
                           invisible="move_type not in ('out_invoice', 'out_refund')">
                         
                         <group>
-                            <!-- Grupo de Protesto -->
                             <group string="⚖️ Protesto" name="protest_group">
                                 <field name="itau_protest_code"/>
                                 <field name="itau_protest_days" 
@@ -112,7 +115,6 @@
                                        required="itau_protest_code == '1'"/>
                             </group>
                             
-                            <!-- Grupo de Negativação -->
                             <group string="📝 Negativação" name="negativation_group">
                                 <field name="itau_negativation_code"/>
                                 <field name="itau_negativation_days" 
@@ -121,7 +123,6 @@
                             </group>
                         </group>
 
-                        <!-- Grupo de Mensagens -->
                         <group string="💬 Mensagens de Cobrança" name="collection_messages_group">
                             <field name="collection_messages" nolabel="1" 
                                    placeholder="Adicione aqui mensagens ou notas relacionadas à cobrança desta fatura..."

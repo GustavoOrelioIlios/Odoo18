@@ -26,9 +26,9 @@ class AccountMove(models.Model):
 
     sicoob_nosso_numero = fields.Char(
         string='Nosso Número (Sicoob)',
-        help='Número que identifica o boleto de cobrança no Sisbr',
         copy=False,
-        readonly=True
+        readonly=True,
+        help="Número sequencial gerado para identificação do boleto no Sicoob."
     )
 
     sicoob_payment_limit_date = fields.Date(
@@ -81,6 +81,13 @@ class AccountMove(models.Model):
         compute='_compute_payment_journal_id',
         store=True,
         help='Diário associado à forma de pagamento selecionada'
+    )
+
+    boleto_ids = fields.One2many(
+        'move.boleto',
+        'invoice_id',
+        string='Boletos Bancários (Sicoob)',
+        help="Boletos bancários gerados para esta fatura via Sicoob."
     )
 
     @api.depends('ref')
@@ -303,6 +310,15 @@ class AccountMove(models.Model):
         self.ensure_one()
         _logger = logging.getLogger(__name__)
         
+        # Garante que o "Nosso Número" seja gerado ANTES de montar o payload
+        if not self.sicoob_nosso_numero:
+            # Gera um novo número da sequência se ele ainda não existir na fatura
+            nosso_numero_gerado = self.env['ir.sequence'].next_by_code('sicoob.nosso.numero')
+            if not nosso_numero_gerado:
+                raise UserError(_("A sequência para 'Nosso Número' (sicoob.nosso.numero) não pôde ser gerada. Verifique as configurações da sequência."))
+            # Grava o número gerado na fatura para consistência
+            self.sicoob_nosso_numero = nosso_numero_gerado
+
         # Obtém o diário da forma de pagamento
         journal = self.payment_journal_id
         _logger.info("[Sicoob] Usando diário %s (id: %s) para configurações do boleto", 
@@ -332,7 +348,7 @@ class AccountMove(models.Model):
         # Monta estrutura base
         boleto_data = {
             'seuNumero': self.name,  # Usa o número da fatura como seu número
-            'nossoNumero': self.sicoob_nosso_numero or '',  # Será gerado pela sequência
+            'nossoNumero': int(self.sicoob_nosso_numero) if self.sicoob_nosso_numero else 0,  # Converte para inteiro
             'dataEmissao': self.invoice_date.strftime('%Y-%m-%d'),
             'dataVencimento': self.invoice_date_due.strftime('%Y-%m-%d'),
             'dataLimitePagamento': (self.sicoob_payment_limit_date or self.invoice_date_due).strftime('%Y-%m-%d'),
@@ -501,4 +517,39 @@ class AccountMove(models.Model):
         _logger.info("[Sicoob] Integração encontrada (id: %s)", sicoob_api.id)
 
         # Emite o boleto
-        return sicoob_api._emitir_boleto_sicoob(self) 
+        return sicoob_api._emitir_boleto_sicoob(self)
+
+    def _create_boleto_record_from_sicoob_api_response(self, response_data):
+        """
+        Processa a resposta da API do Sicoob e cria/atualiza o registro move.boleto.
+        """
+        self.ensure_one()
+        _logger = logging.getLogger(__name__)
+        _logger.info("[Sicoob] Criando registro move.boleto a partir da resposta da API para a fatura %s", self.name)
+
+        if not response_data:
+            _logger.warning("[Sicoob] A resposta da API (response_data) está vazia. Não é possível registrar o boleto para a fatura %s.", self.name)
+            return
+
+        # Extrai os dados da resposta. A API do Sicoob pode não retornar esses dados no momento da criação.
+        # Estamos adicionando os campos para o caso de estarem disponíveis.
+        codigo_barras = response_data.get('codigoBarras')
+        linha_digitavel = response_data.get('linhaDigitavel')
+
+        boleto_vals = {
+            'invoice_id': self.id,
+            'l10n_br_is_own_number': self.sicoob_nosso_numero,
+            'l10n_br_is_barcode': codigo_barras,
+            'l10n_br_is_barcode_formatted': linha_digitavel,
+            'sicoob_company_boleto_id': self.sicoob_company_boleto_id,
+        }
+
+        # Procura por um boleto existente para esta fatura para evitar duplicatas
+        existing_boleto = self.env['move.boleto'].search([('invoice_id', '=', self.id)], limit=1)
+
+        if existing_boleto:
+            _logger.info("[Sicoob] Atualizando boleto existente (ID: %s) para a fatura %s.", existing_boleto.id, self.name)
+            existing_boleto.write(boleto_vals)
+        else:
+            _logger.info("[Sicoob] Criando novo boleto para a fatura %s.", self.name)
+            self.env['move.boleto'].create(boleto_vals) 
