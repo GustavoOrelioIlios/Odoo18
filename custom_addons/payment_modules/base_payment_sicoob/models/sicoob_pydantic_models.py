@@ -49,7 +49,7 @@ class SicoobBoletoRequestPayload(BaseModel):
         ..., 
         description="Data de emissão do boleto. Caso não seja informado, o sistema atribui a data de registro do boleto no Sisbr. Formato: yyyy-MM-dd"
     )
-    nossoNumero: str = Field(
+    nossoNumero: int = Field(
         ..., 
         description="Número que identifica o boleto de cobrança no Sisbr. Gerado pela sequência do Odoo."
     )
@@ -89,10 +89,38 @@ class SicoobBoletoRequestPayload(BaseModel):
     # Campos opcionais para configurações adicionais
     mensagensInstrucao: Optional[List[str]] = Field(None, description="Mensagens de instrução")
     numeroContratoCobranca: Optional[int] = Field(None, description="Número do contrato de cobrança")
+    
+    # ADICIONADO: Novos campos de identificação
+    identificacaoBoletoEmpresa: Optional[str] = Field(None, description="Campo para uso da empresa do beneficiário para identificação do boleto")
+    identificacaoEmissaoBoleto: Optional[int] = Field(None, description="1 – Banco Emite, 2 – Cliente Emite")
+    identificacaoDistribuicaoBoleto: Optional[int] = Field(None, description="1 – Banco Distribui, 2 – Cliente Distribui")
+    gerarPdf: Optional[bool] = Field(None, description="Define se o PDF do boleto deve ser gerado")
+
+    # Campos de juros
+    tipoJurosMora: Optional[int] = Field(None, description="Tipo de juros de mora")
+    valorJurosMora: Optional[float] = Field(None, description="Valor ou percentual dos juros de mora")
+    dataJurosMora: Optional[str] = Field(None, description="Data de início dos juros de mora")
+
+    # Campos de multa
+    tipoMulta: Optional[int] = Field(None, description="Tipo de multa")
+    valorMulta: Optional[float] = Field(None, description="Valor da multa quando tipo for valor fixo")
+    percentualMulta: Optional[float] = Field(None, description="Percentual da multa quando tipo for percentual")
+    dataMulta: Optional[str] = Field(None, description="Data de início da multa")
+
+    # ALTERADO: Campo tipoDesconto agora é obrigatório
+    tipoDesconto: int = Field(..., description="Tipo de desconto (0=Sem desconto, 1=Valor fixo, 2=Percentual)")
+    dataPrimeiroDesconto: Optional[str] = Field(None, description="Data do primeiro desconto")
+    valorPrimeiroDesconto: Optional[float] = Field(None, description="Valor ou percentual do primeiro desconto")
+
+    # ADICIONADO: Campo numeroParcela obrigatório
+    numeroParcela: int = Field(..., description="Número da parcela do boleto")
+
+    # ADICIONADO: Campo para PIX
+    codigoCadastrarPIX: Optional[int] = Field(None, description="Código para cadastrar PIX (0=Não gerar, 1=Gerar)")
 
     model_config = ConfigDict(populate_by_name=True, extra='forbid', str_strip_whitespace=True)
 
-    @field_validator('dataEmissao', 'dataVencimento', 'dataLimitePagamento')
+    @field_validator('dataEmissao', 'dataVencimento', 'dataLimitePagamento', 'dataJurosMora', 'dataMulta', 'dataPrimeiroDesconto')
     def validate_date(cls, v):
         """Valida e formata as datas"""
         if isinstance(v, date):
@@ -166,7 +194,7 @@ class SicoobBoletoValidator:
         """
         try:
             modelo = SicoobBoletoRequestPayload(**dados)
-            return True, modelo.model_dump(), ""
+            return True, modelo.model_dump(exclude_none=True), ""
         except Exception as e:
             erros = []
             for error in e.errors():

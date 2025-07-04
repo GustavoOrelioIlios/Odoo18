@@ -3,7 +3,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 import re
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import logging
 
 
@@ -13,7 +13,15 @@ class AccountMove(models.Model):
     sicoob_contract_number = fields.Char(
         string='Número do Contrato de Cobrança (Sicoob)',
         help='Número do contrato Sicoob associado à fatura',
-        copy=False
+        compute='_compute_sicoob_contract_number',
+        store=True,
+    )
+
+    sicoob_company_boleto_id = fields.Char(
+        string='ID do Boleto na Empresa',
+        help='Campo destinado para uso da empresa do beneficiário para identificação do boleto',
+        copy=False,
+        size=25  # Tamanho máximo de 25 caracteres conforme especificação
     )
 
     sicoob_nosso_numero = fields.Char(
@@ -30,7 +38,7 @@ class AccountMove(models.Model):
     )
 
     sicoob_especie_documento = fields.Selection(
-        related='journal_id.sicoob_especie_documento',
+        related='payment_journal_id.sicoob_especie_documento',
         string='Espécie do Documento (Sicoob)',
         help='Espécie do documento para boletos Sicoob',
         readonly=True
@@ -62,9 +70,29 @@ class AccountMove(models.Model):
 
     sicoob_error_message = fields.Text(
         string='Mensagem de Erro Sicoob',
-        help='Última mensagem de erro retornada pela API Sicoob',
+        help='Última mensagem de erro retornada pela API do Sicoob',
         copy=False
     )
+
+    # Campo computado para armazenar o diário da forma de pagamento
+    payment_journal_id = fields.Many2one(
+        'account.journal',
+        string='Diário de Pagamento',
+        compute='_compute_payment_journal_id',
+        store=True,
+        help='Diário associado à forma de pagamento selecionada'
+    )
+
+    @api.depends('ref')
+    def _compute_sicoob_contract_number(self):
+        for record in self:
+            record.sicoob_contract_number = record.ref
+
+    @api.depends('preferred_payment_method_line_id')
+    def _compute_payment_journal_id(self):
+        """Computa o diário baseado na forma de pagamento selecionada"""
+        for record in self:
+            record.payment_journal_id = record.preferred_payment_method_line_id.journal_id if record.preferred_payment_method_line_id else False
 
     @api.constrains('sicoob_contract_number')
     def _check_sicoob_contract_number(self):
@@ -148,105 +176,254 @@ class AccountMove(models.Model):
 
         return beneficiario_final_data
 
-    def _get_sicoob_boleto_details_data(self):
+    def _get_sicoob_interest_penalty_info(self):
         """
-        Coleta todos os dados necessários para emissão do boleto Sicoob.
+        Obtém informações de juros e multa específicas do Sicoob.
+        
+        Returns:
+            dict: Dicionário com informações de juros e multa
         """
         self.ensure_one()
         _logger = logging.getLogger(__name__)
-        _logger.info("[Sicoob] Coletando dados para boleto da fatura %s", self.name)
+        
+        # Obtém o diário da forma de pagamento
+        journal = self.payment_journal_id
+        _logger.info("[Sicoob] Obtendo informações de juros e multa do diário %s (id: %s)", 
+                    journal.name if journal else 'N/A', 
+                    journal.id if journal else 'N/A')
+        
+        # Inicializa a estrutura de retorno
+        result = {
+            'interest': {
+                'code': None,
+                'value': 0.0,
+                'percent': 0.0,
+                'date_start': 0
+            },
+            'penalty': {
+                'code': None,
+                'value': 0.0,
+                'percent': 0.0,
+                'date_start': 0
+            }
+        }
+        
+        if not journal:
+            _logger.warning("[Sicoob] Nenhum diário encontrado para obter configurações de juros e multa")
+            return result
+        
+        # === JUROS ===
+        _logger.info("[Sicoob] Configurações de juros no diário:")
+        _logger.info("- Código: %s", journal.sicoob_interest_code)
+        _logger.info("- Valor: %s", journal.sicoob_interest_value)
+        _logger.info("- Percentual: %s", journal.sicoob_interest_percent)
+        _logger.info("- Dias para início: %s", journal.sicoob_interest_date_start)
+        
+        if journal.sicoob_interest_code:
+            result['interest']['code'] = journal.sicoob_interest_code
+            result['interest']['date_start'] = journal.sicoob_interest_date_start or 0
+            
+            if journal.sicoob_interest_code == '1':  # Valor por dia
+                result['interest']['value'] = journal.sicoob_interest_value
+            elif journal.sicoob_interest_code == '2':  # Taxa Mensal
+                result['interest']['percent'] = journal.sicoob_interest_percent
+        
+        # === MULTA ===
+        _logger.info("[Sicoob] Configurações de multa no diário:")
+        _logger.info("- Código: %s", journal.sicoob_penalty_code)
+        _logger.info("- Valor: %s", journal.sicoob_penalty_value)
+        _logger.info("- Percentual: %s", journal.sicoob_penalty_percent)
+        _logger.info("- Dias para início: %s", journal.sicoob_penalty_date_start)
+        
+        if journal.sicoob_penalty_code:
+            result['penalty']['code'] = journal.sicoob_penalty_code
+            result['penalty']['date_start'] = journal.sicoob_penalty_date_start or 0
+            
+            if journal.sicoob_penalty_code == '1':  # Valor Fixo
+                result['penalty']['value'] = journal.sicoob_penalty_value
+            elif journal.sicoob_penalty_code == '2':  # Percentual
+                result['penalty']['percent'] = journal.sicoob_penalty_percent
+        
+        return result
 
-        # Obtém os dados do pagador e beneficiário final
-        pagador_data = self._get_sicoob_pagador_data_from_invoice()
-        beneficiario_final_data = self._get_sicoob_beneficiario_final_data()
-
-        # Verifica se tem um diário configurado
-        if not self.journal_id:
-            _logger.error("[Sicoob] Fatura %s não tem diário configurado", self.name)
-            raise UserError(_('A fatura precisa ter um diário configurado.'))
-
-        # Verifica se a empresa tem conta bancária Sicoob configurada
-        if not self.company_id.sicoob_partner_bank_id:
-            _logger.error("[Sicoob] Empresa %s não tem conta bancária Sicoob configurada", self.company_id.name)
-            raise UserError(_(
-                'A empresa "%s" não possui conta bancária Sicoob configurada.\n'
-                'Configure em: Configurações → Empresas → %s → Configurações Sicoob → Conta Bancária Sicoob'
-            ) % (self.company_id.name, self.company_id.name))
-
-        # Log detalhado da conta bancária e suas relações
-        bank_account = self.company_id.sicoob_partner_bank_id
-        _logger.info("[Sicoob] Detalhes da conta bancária:")
-        _logger.info("- ID: %s", bank_account.id)
-        _logger.info("- Número da Conta: %s", bank_account.acc_number)
-        _logger.info("- Banco: %s", bank_account.bank_id.name if bank_account.bank_id else 'Não configurado')
-        _logger.info("- Número Cliente Sicoob: %s", bank_account.sicoob_client_number)
-
-        # Validação do banco
-        if not bank_account.bank_id:
-            _logger.error("[Sicoob] Conta bancária %s não tem banco configurado", bank_account.acc_number)
-            raise UserError(_('A conta bancária não tem um banco configurado. Configure em:\nConfigurações → Empresas → %s → Configurações Sicoob → Conta Bancária Sicoob → Banco') % self.company_id.name)
-
-        if not bank_account.bank_id.name or 'sicoob' not in bank_account.bank_id.name.lower():
-            _logger.error("[Sicoob] Conta bancária %s não é do Sicoob (banco: %s)", bank_account.acc_number, bank_account.bank_id.name)
-            raise UserError(_('A conta bancária deve ser do Sicoob. Configure em:\nConfigurações → Empresas → %s → Configurações Sicoob → Conta Bancária Sicoob → Banco') % self.company_id.name)
-
-        # Validação do número do cliente Sicoob
-        if not bank_account.sicoob_client_number:
-            _logger.error("[Sicoob] Conta bancária %s não tem número de cliente Sicoob", bank_account.acc_number)
-            raise UserError(_('A conta bancária não tem um número de cliente Sicoob configurado. Configure em:\nConfigurações → Empresas → %s → Configurações Sicoob → Conta Bancária Sicoob → Número do Cliente Sicoob') % self.company_id.name)
-
-        # Obtém o nosso número
-        if not self.sicoob_nosso_numero:
-            nosso_numero = self.env['ir.sequence'].next_by_code('sicoob.nosso.numero')
-            self.sicoob_nosso_numero = nosso_numero
+    def _get_discount_info_from_payment_terms(self):
+        """
+        Obtém informações de desconto baseadas no termo de pagamento da fatura.
+        
+        Returns:
+            dict: Dicionário com estrutura de desconto da API Sicoob
+        """
+        self.ensure_one()
+        
+        if not self.invoice_payment_term_id:
+            return {}
+        
+        payment_term = self.invoice_payment_term_id
+        
+        # === NOVA LÓGICA: Usa sistema de múltiplos descontos ===
+        if hasattr(payment_term, 'sicoob_discount_line_ids') and payment_term.sicoob_discount_line_ids:
+            # Usa o método do termo de pagamento para gerar estrutura
+            discount_data = payment_term.get_sicoob_discount_data(self.invoice_date)
+            return discount_data
+        
+        # === LÓGICA ANTIGA: Compatibilidade com sistema original ===
         else:
-            nosso_numero = self.sicoob_nosso_numero
-        _logger.info("[Sicoob] Nosso número: %s", nosso_numero)
+            # Obtém linhas do termo de pagamento que são descontos (sistema original)
+            payment_term_lines = payment_term.line_ids.filtered(
+                lambda line: line.value == 'discount'
+            ).sorted('sequence')
+            
+            if payment_term_lines:
+                line = payment_term_lines[0]  # Pega apenas o primeiro desconto
+                if line.value_amount != 0:  # Se há desconto configurado (pode ser negativo)
+                    # Calcula data do desconto baseada na data da fatura
+                    discount_date = self.invoice_date
+                    if line.days > 0:
+                        discount_date = self.invoice_date + timedelta(days=line.days)
+                    
+                    # Remove o sinal negativo do percentual (Odoo armazena como negativo)
+                    percentual_absoluto = abs(line.value_amount)
+                    
+                    # Retorna a estrutura de desconto conforme API Sicoob
+                    return {
+                        'tipoDesconto': '2',  # Código para desconto percentual (padrão antigo)
+                        'dataPrimeiroDesconto': discount_date.strftime('%Y-%m-%d'),
+                        'valorPrimeiroDesconto': percentual_absoluto
+                    }
+            
+            return {}
 
-        # Calcula datas
-        data_emissao = self.invoice_date or fields.Date.today()
-        data_vencimento = self.invoice_date_due or data_emissao
-        data_limite = self.sicoob_payment_limit_date or data_vencimento
-
-        # Limpa o número da conta corrente (apenas dígitos)
-        numero_conta = ''.join(filter(str.isdigit, bank_account.acc_number or ''))
-        if not numero_conta:
-            raise UserError(_('A conta bancária não tem um número de conta válido.'))
-
-        # Limpa o número do cliente (apenas dígitos)
-        numero_cliente = ''.join(filter(str.isdigit, bank_account.sicoob_client_number or ''))
-        if not numero_cliente:
-            raise UserError(_('O número do cliente Sicoob deve conter apenas dígitos.'))
-
-        # Limpa o número do contrato (apenas dígitos)
-        numero_contrato = None
-        if self.sicoob_contract_number:
-            numero_contrato = ''.join(filter(str.isdigit, self.sicoob_contract_number))
-            if numero_contrato:
-                numero_contrato = int(numero_contrato)
-
-        # Monta o dicionário de dados do boleto
+    def _get_sicoob_boleto_details_data(self):
+        """
+        Gera estrutura de dados para o boleto Sicoob
+        
+        Returns:
+            dict: Estrutura de dados para API do Sicoob
+        """
+        self.ensure_one()
+        _logger = logging.getLogger(__name__)
+        
+        # Obtém o diário da forma de pagamento
+        journal = self.payment_journal_id
+        _logger.info("[Sicoob] Usando diário %s (id: %s) para configurações do boleto", 
+                    journal.name if journal else 'N/A', 
+                    journal.id if journal else 'N/A')
+        
+        if not journal:
+            raise UserError(_('A fatura precisa ter uma forma de pagamento com diário Sicoob configurado.'))
+        
+        # Obtém dados de juros e multa específicos do Sicoob
+        juros_multa_info = self._get_sicoob_interest_penalty_info()
+        
+        # Obtém dados de desconto
+        desconto_info = self._get_discount_info_from_payment_terms()
+        
+        # Obtém dados do pagador
+        pagador_data = self._get_sicoob_pagador_data_from_invoice()
+        
+        # Obtém dados do beneficiário final
+        beneficiario_final_data = self._get_sicoob_beneficiario_final_data()
+        
+        # Obtém a conta bancária Sicoob da empresa
+        bank_account = self.company_id.sicoob_partner_bank_id
+        if not bank_account:
+            raise UserError(_('Conta bancária Sicoob não configurada para a empresa.'))
+        
+        # Monta estrutura base
         boleto_data = {
-            'nossoNumero': nosso_numero,
-            'seuNumero': self.name or '',  # Número da fatura
+            'seuNumero': self.name,  # Usa o número da fatura como seu número
+            'nossoNumero': self.sicoob_nosso_numero or '',  # Será gerado pela sequência
+            'dataEmissao': self.invoice_date.strftime('%Y-%m-%d'),
+            'dataVencimento': self.invoice_date_due.strftime('%Y-%m-%d'),
+            'dataLimitePagamento': (self.sicoob_payment_limit_date or self.invoice_date_due).strftime('%Y-%m-%d'),
             'valor': float(self.amount_total),
-            'dataEmissao': data_emissao.strftime('%Y-%m-%d'),
-            'dataVencimento': data_vencimento.strftime('%Y-%m-%d'),
-            'dataLimitePagamento': data_limite.strftime('%Y-%m-%d'),
-            'codigoEspecieDocumento': self.journal_id.sicoob_especie_documento,
-            'numeroCliente': int(numero_cliente),
-            'codigoModalidade': int(self.journal_id.sicoob_modality_code or '1'),
-            'numeroContaCorrente': int(numero_conta),
+            'aceite': True,
+            'codigoEspecieDocumento': journal.sicoob_especie_documento,
+            'numeroCliente': int(bank_account.sicoob_client_number),
+            'codigoModalidade': int(journal.sicoob_modality_code),
+            'numeroContaCorrente': int(bank_account.acc_number),
             'pagador': pagador_data,
             'beneficiarioFinal': beneficiario_final_data,
-            'aceite': True,  # Por padrão, aceite é True
-            'mensagensInstrucao': [
-                'Não receber após o vencimento',
-                f'Boleto referente à fatura {self.name}'
-            ] if self.name else None,
-            'numeroContratoCobranca': numero_contrato
+            'tipoDesconto': 0,  # 0 = Sem desconto
+            'numeroParcela': 1,  # Assume primeira parcela por padrão
         }
 
+        # Adiciona mensagens de instrução se existirem
+        if journal.narration:
+            boleto_data['mensagensInstrucao'] = journal.narration.split('\n')
+        
+        # Adiciona número do contrato se existir
+        if self.sicoob_contract_number:
+            boleto_data['numeroContratoCobranca'] = int(self.sicoob_contract_number)
+        
+        # === ADICIONA INFORMAÇÕES DE JUROS ===
+        _logger.info("[Sicoob] Adicionando informações de juros ao boleto:")
+        _logger.info("- Código de juros recebido: %s", juros_multa_info['interest']['code'])
+        
+        # Sempre inclui o tipo de juros, mesmo que seja isento
+        boleto_data['tipoJurosMora'] = juros_multa_info['interest']['code'] or '3'  # '3' = Isento
+        _logger.info("- tipoJurosMora definido como: %s", boleto_data['tipoJurosMora'])
+        
+        # Se não for isento, adiciona data e valor/percentual
+        if juros_multa_info['interest']['code'] and juros_multa_info['interest']['code'] != '3':
+            data_juros = self.invoice_date_due + timedelta(days=juros_multa_info['interest']['date_start'])
+            boleto_data['dataJurosMora'] = data_juros.strftime('%Y-%m-%d')
+            _logger.info("- Data de juros calculada: %s (vencimento: %s + %s dias)", 
+                        boleto_data['dataJurosMora'], 
+                        self.invoice_date_due, 
+                        juros_multa_info['interest']['date_start'])
+            
+            # Adiciona valor ou percentual conforme o tipo
+            if juros_multa_info['interest']['code'] == '1':  # Valor por dia
+                boleto_data['valorJurosMora'] = juros_multa_info['interest']['value']
+                _logger.info("- Valor de juros por dia: %s", boleto_data['valorJurosMora'])
+            elif juros_multa_info['interest']['code'] == '2':  # Taxa Mensal
+                boleto_data['valorJurosMora'] = juros_multa_info['interest']['percent']
+                _logger.info("- Percentual de juros mensal: %s", boleto_data['valorJurosMora'])
+        
+        # === ADICIONA INFORMAÇÕES DE MULTA ===
+        _logger.info("[Sicoob] Adicionando informações de multa ao boleto:")
+        _logger.info("- Código de multa recebido: %s", juros_multa_info['penalty']['code'])
+        
+        # Sempre inclui o tipo de multa, mesmo que seja isento
+        boleto_data['tipoMulta'] = juros_multa_info['penalty']['code'] or '0'  # '0' = Isento
+        _logger.info("- tipoMulta definido como: %s", boleto_data['tipoMulta'])
+        
+        # Se não for isento, adiciona data e valor/percentual
+        if juros_multa_info['penalty']['code'] and juros_multa_info['penalty']['code'] != '0':
+            data_multa = self.invoice_date_due + timedelta(days=juros_multa_info['penalty']['date_start'])
+            boleto_data['dataMulta'] = data_multa.strftime('%Y-%m-%d')
+            _logger.info("- Data de multa calculada: %s (vencimento: %s + %s dias)", 
+                        boleto_data['dataMulta'], 
+                        self.invoice_date_due, 
+                        juros_multa_info['penalty']['date_start'])
+            
+            # Adiciona valor ou percentual conforme o tipo
+            if juros_multa_info['penalty']['code'] == '1':  # Valor Fixo
+                boleto_data['valorMulta'] = juros_multa_info['penalty']['value']
+                _logger.info("- Valor fixo de multa: %s", boleto_data['valorMulta'])
+            elif juros_multa_info['penalty']['code'] == '2':  # Percentual
+                boleto_data['valorMulta'] = juros_multa_info['penalty']['percent']
+                _logger.info("- Percentual de multa: %s", boleto_data['valorMulta'])
+        
+        # === ADICIONA INFORMAÇÕES DE DESCONTO ===
+        if desconto_info:
+            boleto_data.update({
+                'tipoDesconto': desconto_info.get('tipoDesconto', '0'),
+                'dataPrimeiroDesconto': desconto_info.get('dataPrimeiroDesconto'),
+                'valorPrimeiroDesconto': desconto_info.get('valorPrimeiroDesconto'),
+            })
+        
+        _logger.info("[Sicoob] Estrutura final de juros e multa no boleto:")
+        _logger.info("=== JUROS ===")
+        _logger.info("- tipoJurosMora: %s", boleto_data.get('tipoJurosMora'))
+        _logger.info("- dataJurosMora: %s", boleto_data.get('dataJurosMora'))
+        _logger.info("- valorJurosMora: %s", boleto_data.get('valorJurosMora'))
+        _logger.info("=== MULTA ===")
+        _logger.info("- tipoMulta: %s", boleto_data.get('tipoMulta'))
+        _logger.info("- dataMulta: %s", boleto_data.get('dataMulta'))
+        _logger.info("- valorMulta: %s", boleto_data.get('valorMulta'))
+        
         return boleto_data
 
     def action_emitir_boleto_sicoob(self):
@@ -270,10 +447,15 @@ class AccountMove(models.Model):
             _logger.error("[Sicoob] Fatura %s não é uma fatura de cliente (move_type: %s)", self.name, self.move_type)
             raise UserError(_('Boletos só podem ser emitidos para faturas de cliente.'))
 
-        # Verifica se tem um diário configurado
-        if not self.journal_id:
-            _logger.error("[Sicoob] Fatura %s não tem diário configurado", self.name)
-            raise UserError(_('A fatura precisa ter um diário configurado.'))
+        # Verifica se tem uma conta bancária configurada
+        if not self.partner_bank_id:
+            _logger.error("[Sicoob] Fatura %s não tem conta bancária configurada", self.name)
+            raise UserError(_('A fatura precisa ter uma conta bancária configurada.'))
+
+        # Verifica se a conta bancária tem um diário associado
+        if not self.partner_bank_id.journal_id:
+            _logger.error("[Sicoob] Conta bancária %s não tem diário associado", self.partner_bank_id.acc_number)
+            raise UserError(_('A conta bancária precisa ter um diário associado.'))
 
         # Verifica se a empresa tem conta bancária Sicoob configurada
         if not self.company_id.sicoob_partner_bank_id:

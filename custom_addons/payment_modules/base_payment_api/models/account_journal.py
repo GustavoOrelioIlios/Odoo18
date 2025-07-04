@@ -70,4 +70,4 @@ class AccountJournal(models.Model):
         if self.payment_penalty_code:
             # Reset dos valores para permitir reconfiguração
             self.payment_penalty_percent = 0.0
-            self.payment_penalty_value = 0.0 
+            self.payment_penalty_value = 0.0

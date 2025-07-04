@@ -15,31 +15,6 @@
                             class="oe_highlight"
                             invisible="state != 'posted' or payment_state in ['paid', 'in_payment'] or move_type not in ['out_invoice', 'out_refund'] or not journal_id"/>
                 </xpath>
-
-                <!-- Adiciona aba "Boleto Sicoob" -->
-                <xpath expr="//notebook" position="inside">
-                    <page string="Sicoob" name="sicoob_page" invisible="move_type not in ['out_invoice', 'out_refund']">
-                        <group>
-                            <group string="Dados do Boleto">
-                                <field name="sicoob_contract_number"/>
-                                <field name="sicoob_nosso_numero"/>
-                                <field name="sicoob_payment_limit_date"/>
-                                <field name="sicoob_especie_documento"/>
-                                <field name="sicoob_status"/>
-                                <field name="sicoob_date"/>
-                                <field name="sicoob_error_message" invisible="sicoob_status != 'error'"/>
-                            </group>
-                        </group>
-                        <group>
-                            <group string="JSON Enviado">
-                                <field name="test_json_enviado" widget="ace" options="{'language': 'json'}" readonly="1"/>
-                            </group>
-                            <group string="JSON Retornado">
-                                <field name="test_json_retorno" widget="ace" options="{'language': 'json'}" readonly="1"/>
-                            </group>
-                        </group>
-                    </page>
-                </xpath>
             </field>
         </record>
     </data>
