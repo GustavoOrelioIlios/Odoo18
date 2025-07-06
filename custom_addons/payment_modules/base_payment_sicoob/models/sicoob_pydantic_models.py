@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from typing import Optional, List, Union
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, Field, field_validator, ConfigDict, ValidationError
 from datetime import date, datetime
 from decimal import Decimal
 import re
@@ -24,14 +24,61 @@ class PagadorModel(BaseModel):
     uf: str = Field(..., description="UF do pagador")
     email: Optional[str] = Field(None, description="E-mail do pagador")
 
-    model_config = ConfigDict(populate_by_name=True, extra='forbid', str_strip_whitespace=True)
+    model_config = ConfigDict(populate_by_name=True, extra='ignore', str_strip_whitespace=True) # Alterado para 'ignore'
+
+    @field_validator('numeroCpfCnpj')
+    def validate_cpf_cnpj(cls, v):
+        # Remove caracteres não numéricos
+        cleaned_v = re.sub(r'[^0-9]', '', v)
+        if len(cleaned_v) == 11:  # CPF
+            if not re.fullmatch(r'\d{11}', cleaned_v):
+                raise ValueError("CPF inválido. Deve conter 11 dígitos numéricos.")
+        elif len(cleaned_v) == 14:  # CNPJ
+            if not re.fullmatch(r'\d{14}', cleaned_v):
+                raise ValueError("CNPJ inválido. Deve conter 14 dígitos numéricos.")
+        else:
+            raise ValueError("CPF/CNPJ deve conter 11 (CPF) ou 14 (CNPJ) dígitos numéricos.")
+        return cleaned_v
+
+    @field_validator('cep')
+    def validate_cep(cls, v):
+        cleaned_v = re.sub(r'[^0-9]', '', v)
+        if not re.fullmatch(r'\d{8}', cleaned_v):
+            raise ValueError("CEP inválido. Deve conter 8 dígitos numéricos.")
+        return cleaned_v
+
+    @field_validator('uf')
+    def validate_uf(cls, v):
+        if not re.fullmatch(r'[A-Z]{2}', v):
+            raise ValueError("UF inválida. Deve conter 2 letras maiúsculas.")
+        return v
+    
+    @field_validator('email')
+    def validate_email(cls, v):
+        if v is not None and not re.fullmatch(r'[^@]+@[^@]+\.[^@]+', v):
+            raise ValueError("Formato de e-mail inválido.")
+        return v
 
 class BeneficiarioFinalModel(BaseModel):
     """Modelo Pydantic para dados do beneficiário final"""
     numeroCpfCnpj: str = Field(..., description="CPF/CNPJ do beneficiário final")
     nome: str = Field(..., description="Nome do beneficiário final")
 
-    model_config = ConfigDict(populate_by_name=True, extra='forbid', str_strip_whitespace=True)
+    model_config = ConfigDict(populate_by_name=True, extra='ignore', str_strip_whitespace=True) # Alterado para 'ignore'
+
+    @field_validator('numeroCpfCnpj')
+    def validate_cpf_cnpj(cls, v):
+        cleaned_v = re.sub(r'[^0-9]', '', v)
+        if len(cleaned_v) == 11:  # CPF
+            if not re.fullmatch(r'\d{11}', cleaned_v):
+                raise ValueError("CPF inválido. Deve conter 11 dígitos numéricos.")
+        elif len(cleaned_v) == 14:  # CNPJ
+            if not re.fullmatch(r'\d{14}', cleaned_v):
+                raise ValueError("CNPJ inválido. Deve conter 14 dígitos numéricos.")
+        else:
+            raise ValueError("CPF/CNPJ deve conter 11 (CPF) ou 14 (CNPJ) dígitos numéricos.")
+        return cleaned_v
+
 
 class RateioCreditosItemModel(BaseModel):
     """Modelo Pydantic para item de rateio de créditos"""
@@ -40,14 +87,14 @@ class RateioCreditosItemModel(BaseModel):
     numeroContaCorrente: int = Field(..., description="Número da conta corrente")
     valor: float = Field(..., description="Valor do rateio")
 
-    model_config = ConfigDict(populate_by_name=True, extra='forbid', str_strip_whitespace=True)
+    model_config = ConfigDict(populate_by_name=True, extra='ignore', str_strip_whitespace=True) # Alterado para 'ignore'
 
 class SicoobBoletoRequestPayload(BaseModel):
     """Modelo Pydantic principal para requisição de boleto Sicoob"""
     # Campos obrigatórios conforme especificação
     dataEmissao: str = Field(
         ..., 
-        description="Data de emissão do boleto. Caso não seja informado, o sistema atribui a data de registro do boleto no Sisbr. Formato: yyyy-MM-dd"
+        description="Data de emissão do boleto. Caso não seja informado, o sistema atribui a data de registro do boleto no Sisbr. Formato: YYYY-MM-dd"
     )
     nossoNumero: int = Field(
         ..., 
@@ -64,11 +111,11 @@ class SicoobBoletoRequestPayload(BaseModel):
     )
     dataVencimento: str = Field(
         ..., 
-        description="Data de vencimento do boleto. Formato: yyyy-MM-dd"
+        description="Data de vencimento do boleto. Formato: YYYY-MM-dd"
     )
     dataLimitePagamento: str = Field(
         ..., 
-        description="Data limite para pagamento do boleto. Formato: yyyy-MM-dd"
+        description="Data limite para pagamento do boleto. Formato: YYYY-MM-dd"
     )
     aceite: bool = Field(
         True, 
@@ -118,14 +165,24 @@ class SicoobBoletoRequestPayload(BaseModel):
     # ADICIONADO: Campo para PIX
     codigoCadastrarPIX: Optional[int] = Field(None, description="Código para cadastrar PIX (0=Não gerar, 1=Gerar)")
 
-    model_config = ConfigDict(populate_by_name=True, extra='forbid', str_strip_whitespace=True)
+    model_config = ConfigDict(populate_by_name=True, extra='ignore', str_strip_whitespace=True) # Alterado para 'ignore'
 
     @field_validator('dataEmissao', 'dataVencimento', 'dataLimitePagamento', 'dataJurosMora', 'dataMulta', 'dataPrimeiroDesconto')
-    def validate_date(cls, v):
-        """Valida e formata as datas"""
+    def validate_date_format(cls, v): # Renomeado para evitar conflito com 'date' do datetime
+        """Valida e formata as datas no formato YYYY-MM-dd"""
+        if v is None:
+            return v # Permite None para campos opcionais
+        
+        # Se for um objeto date, converte para string no formato ISO
         if isinstance(v, date):
             return v.isoformat()
-        return v
+        
+        # Tenta validar se a string está no formato YYYY-MM-dd
+        try:
+            datetime.strptime(v, '%Y-%m-%d')
+            return v
+        except ValueError:
+            raise ValueError("Formato de data inválido. Use YYYY-MM-dd.")
 
     @field_validator('seuNumero')
     def validate_seu_numero(cls, v):
@@ -138,41 +195,12 @@ class SicoobBoletoRequestPayload(BaseModel):
     def validate_especie_documento(cls, v):
         """Valida o código da espécie do documento"""
         especies_validas = {
-            'CH': 'Cheque',
-            'DM': 'Duplicata Mercantil',
-            'DMI': 'Duplicata Mercantil p/ Indicação',
-            'DS': 'Duplicata de Serviço',
-            'DSI': 'Duplicata de Serviço p/ Indicação',
-            'DR': 'Duplicata Rural',
-            'LC': 'Letra de Câmbio',
-            'NCC': 'Nota de Crédito Comercial',
-            'NCE': 'Nota de Crédito a Exportação',
-            'NCI': 'Nota de Crédito Industrial',
-            'NCR': 'Nota de Crédito Rural',
-            'NP': 'Nota Promissória',
-            'NPR': 'Nota Promissória Rural',
-            'TM': 'Triplicata Mercantil',
-            'TS': 'Triplicata de Serviço',
-            'NS': 'Nota de Seguro',
-            'RC': 'Recibo',
-            'FAT': 'Fatura',
-            'ND': 'Nota de Débito',
-            'AP': 'Apólice de Seguro',
-            'ME': 'Mensalidade Escolar',
-            'PC': 'Parcela de Consórcio',
-            'NF': 'Nota Fiscal',
-            'DD': 'Documento de Dívida',
-            'CPR': 'Cédula de Produto Rural',
-            'WR': 'Warrant',
-            'DAE': 'Dívida Ativa de Estado',
-            'DAM': 'Dívida Ativa de Município',
-            'DAU': 'Dívida Ativa da União',
-            'EC': 'Encargos Condominiais',
-            'CPS': 'Conta de Prestação de Serviços',
-            'OUT': 'Outros'
+            'CH', 'DM', 'DMI', 'DS', 'DSI', 'DR', 'LC', 'NCC', 'NCE', 'NCI', 'NCR', 'NP', 'NPR', 
+            'TM', 'TS', 'NS', 'RC', 'FAT', 'ND', 'AP', 'ME', 'PC', 'NF', 'DD', 'CPR', 'WR', 
+            'DAE', 'DAM', 'DAU', 'EC', 'CPS', 'OUT'
         }
         if v not in especies_validas:
-            raise ValueError(f"Espécie de documento inválida. Valores válidos: {', '.join(especies_validas.keys())}")
+            raise ValueError(f"Espécie de documento inválida. Valores válidos: {', '.join(sorted(especies_validas))}")
         return v
 
 class SicoobBoletoValidator:
@@ -194,33 +222,29 @@ class SicoobBoletoValidator:
         """
         try:
             modelo = SicoobBoletoRequestPayload(**dados)
+            # Retorna o dicionário de dados do modelo, excluindo campos None
             return True, modelo.model_dump(exclude_none=True), ""
-        except Exception as e:
+        except ValidationError as e: # Captura especificamente ValidationError
             erros = []
             for error in e.errors():
-                campo = " -> ".join(str(loc) for loc in error['loc'])
+                loc_path = " -> ".join(str(loc) for loc in error['loc'])
                 msg = error['msg']
                 
-                # Mapeamento de mensagens de erro comuns
+                # Mapeamento de mensagens de erro comuns e mais específicas
                 if "field required" in msg:
-                    msg = f"Campo obrigatório"
-                elif "must be greater than" in msg:
-                    msg = f"Deve ser maior que zero"
-                elif "invalid date format" in msg:
-                    msg = f"Formato de data inválido"
-                elif "string does not match pattern" in msg:
-                    if "CPF" in campo or "CNPJ" in campo:
-                        msg = "CPF/CNPJ inválido"
-                    elif "CEP" in campo:
-                        msg = "CEP deve conter 8 dígitos"
-                    elif "UF" in campo:
-                        msg = "UF deve ser 2 letras maiúsculas"
-                    elif "email" in campo:
-                        msg = "E-mail inválido"
+                    msg = "Campo obrigatório."
+                elif "Value must be greater than 0" in msg: # Mensagem mais específica do Pydantic para gt=0
+                    msg = "Deve ser maior que zero."
+                elif "Formato de data inválido" in msg: # Mensagem personalizada do validador
+                    msg = "Formato de data inválido. Use YYYY-MM-dd."
+                elif "Value error, " in msg: # Captura mensagens personalizadas de ValueError
+                    msg = msg.replace("Value error, ", "") # Remove o prefixo do Pydantic
                 
-                erros.append(f"Campo '{campo}': {msg}")
+                erros.append(f"Campo '{loc_path}': {msg}")
             
             return False, {}, "\n".join(erros)
+        except Exception as e: # Captura outras exceções inesperadas
+            return False, {}, f"Erro inesperado durante a validação: {str(e)}"
 
     @staticmethod
     def formatar_erros_para_exibicao(erros: str) -> str:
@@ -236,4 +260,4 @@ class SicoobBoletoValidator:
         if not erros:
             return ""
         
-        return "Erros de validação encontrados:\n" + erros 
+        return "Erros de validação encontrados:\n" + erros

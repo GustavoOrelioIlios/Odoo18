@@ -8,6 +8,8 @@
         <field name="arch" type="xml">
             <field name="invoice_id" position="after">
                 <field name="sicoob_company_boleto_id"/>
+                <field name="sicoob_api_boleto_id"/>
+                <field name="sicoob_nosso_numero"/>
             </field>
         </field>
     </record>
@@ -18,9 +20,13 @@
         <field name="model">move.boleto</field>
         <field name="inherit_id" ref="base_payment_api.view_move_boleto_form"/>
         <field name="arch" type="xml">
-            <field name="invoice_id" position="after">
-                <field name="sicoob_company_boleto_id"/>
-            </field>
+            <xpath expr="//group[last()]" position="after">
+                <group string="Dados Sicoob">
+                    <field name="sicoob_company_boleto_id"/>
+                    <field name="sicoob_api_boleto_id"/>
+                    <field name="sicoob_nosso_numero"/>
+                </group>
+            </xpath>
         </field>
     </record>
 </odoo> 

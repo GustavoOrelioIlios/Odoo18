@@ -14,4 +14,19 @@ class MoveBoletoSicoob(models.Model):
         size=25,
         readonly=True,
         help="Campo para uso da empresa do beneficiário para identificação do boleto no Sicoob. Tamanho máximo 25 caracteres."
+    )
+
+    sicoob_api_boleto_id = fields.Char(
+        string='ID do Boleto (API Sicoob)',
+        copy=False,
+        index=True,
+        readonly=True,
+        help="ID único retornado pela API do Sicoob ou um UUID local para referência, similar ao ID Itaú."
+    )
+
+    sicoob_nosso_numero = fields.Char(
+        string='Nosso Número (Sicoob)',
+        copy=False,
+        readonly=True,
+        help="Número sequencial gerado para identificação do boleto no Sicoob."
     ) 

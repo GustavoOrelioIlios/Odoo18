@@ -5,6 +5,7 @@ from odoo.exceptions import ValidationError, UserError
 import re
 from datetime import date, timedelta, datetime
 import logging
+import uuid
 
 
 class AccountMove(models.Model):
@@ -362,6 +363,8 @@ class AccountMove(models.Model):
             'beneficiarioFinal': beneficiario_final_data,
             'tipoDesconto': 0,  # 0 = Sem desconto
             'numeroParcela': 1,  # Assume primeira parcela por padrão
+            'identificacaoEmissaoBoleto': int(journal.sicoob_emission_type),  # 1 = Banco Emite, 2 = Cliente Emite
+            'identificacaoDistribuicaoBoleto': int(journal.sicoob_distribution_type),  # 1 = Banco Distribui, 2 = Cliente Distribui
         }
 
         # Adiciona mensagens de instrução se existirem
@@ -542,6 +545,8 @@ class AccountMove(models.Model):
             'l10n_br_is_barcode': codigo_barras,
             'l10n_br_is_barcode_formatted': linha_digitavel,
             'sicoob_company_boleto_id': self.sicoob_company_boleto_id,
+            'sicoob_api_boleto_id': str(uuid.uuid4()),  # Gerar UUID para ID do boleto, similar ao Itaú
+            'sicoob_nosso_numero': self.sicoob_nosso_numero,  # Adiciona o nosso número específico do Sicoob
         }
 
         # Procura por um boleto existente para esta fatura para evitar duplicatas
