@@ -17,6 +17,16 @@ class MoveBoleto(models.Model):
         index=True,
         help="Fatura de origem à qual este boleto está vinculado."
     )
+
+    bank_type = fields.Selection([
+        ('itau', 'Itaú'),
+        ('sicoob', 'Sicoob')
+    ], string='Banco',
+        required=True,
+        readonly=True,
+        help="Identifica o banco ao qual este boleto pertence"
+    )
+
     data_emissao = fields.Date(
         string='Data de Emissão',
         related='invoice_id.invoice_date',
@@ -46,4 +56,12 @@ class MoveBoleto(models.Model):
         string='Linha Digitável',
         copy=False,
         readonly=True
+    )
+    
+    # Campo para Nosso Número do Sicoob
+    sicoob_nosso_numero = fields.Char(
+        string='Nosso Número (Sicoob)',
+        copy=False,
+        readonly=True,
+        help="Número sequencial gerado para identificação do boleto no Sicoob."
     ) 

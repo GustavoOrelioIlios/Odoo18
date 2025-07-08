@@ -18,12 +18,12 @@ class AccountMove(models.Model):
         store=True,
     )
 
-    sicoob_company_boleto_id = fields.Char(
-        string='ID do Boleto na Empresa',
-        help='Campo destinado para uso da empresa do beneficiário para identificação do boleto',
-        copy=False,
-        size=25  # Tamanho máximo de 25 caracteres conforme especificação
-    )
+    # sicoob_company_boleto_id = fields.Char(
+    #     string='ID do Boleto na Empresa',
+    #     help='Campo destinado para uso da empresa do beneficiário para identificação do boleto',
+    #     copy=False,
+    #     size=25  # Tamanho máximo de 25 caracteres conforme especificação
+    # )
 
     sicoob_nosso_numero = fields.Char(
         string='Nosso Número (Sicoob)',
@@ -541,16 +541,20 @@ class AccountMove(models.Model):
 
         boleto_vals = {
             'invoice_id': self.id,
+            'bank_type': 'sicoob',  # Identifica que é um boleto Sicoob
             'l10n_br_is_own_number': self.sicoob_nosso_numero,
             'l10n_br_is_barcode': codigo_barras,
             'l10n_br_is_barcode_formatted': linha_digitavel,
-            'sicoob_company_boleto_id': self.sicoob_company_boleto_id,
+            # 'sicoob_company_boleto_id': self.sicoob_company_boleto_id,
             'sicoob_api_boleto_id': str(uuid.uuid4()),  # Gerar UUID para ID do boleto, similar ao Itaú
             'sicoob_nosso_numero': self.sicoob_nosso_numero,  # Adiciona o nosso número específico do Sicoob
         }
 
         # Procura por um boleto existente para esta fatura para evitar duplicatas
-        existing_boleto = self.env['move.boleto'].search([('invoice_id', '=', self.id)], limit=1)
+        existing_boleto = self.env['move.boleto'].search([
+            ('invoice_id', '=', self.id),
+            ('bank_type', '=', 'sicoob')
+        ], limit=1)
 
         if existing_boleto:
             _logger.info("[Sicoob] Atualizando boleto existente (ID: %s) para a fatura %s.", existing_boleto.id, self.name)

@@ -11,54 +11,54 @@
                 <xpath expr="//page[@name='integration_settings']//group" position="inside">
                     <group name="sicoob_settings" invisible="type != 'bank'" col="4">
                         <group string="Configurações do Boleto (Sicoob)" colspan="4">
-                            <field name="sicoob_especie_documento" required="1"/>
-                            <field name="sicoob_modality_code" required="1"/>
-                            <field name="narration" placeholder="Mensagens de instrução para o boleto..."/>
-                            <field name="sicoob_emission_type"/>
-                            <field name="sicoob_distribution_type"/>
-                            <field name="sicoob_generate_pdf"/>
-                            <field name="sicoob_generate_pix"/>
-                        </group>
+                                <field name="sicoob_especie_documento" required="1"/>
+                                <field name="sicoob_modality_code" required="1"/>
+                                <field name="narration" placeholder="Mensagens de instrução para o boleto..."/>
+                                <field name="sicoob_emission_type"/>
+                                <field name="sicoob_distribution_type"/>
+                                <field name="sicoob_generate_pdf"/>
+                                <field name="sicoob_generate_pix"/>
+                            </group>
                         <group string="Configurações de Juros" colspan="2">
-                            <field name="sicoob_interest_code"/>
-                            <field name="sicoob_interest_percent" 
-                                   invisible="sicoob_interest_code not in ['2']"
-                                   required="sicoob_interest_code in ['2']"
-                                   string="Taxa Mensal (%)"
-                                   help="Taxa mensal de juros em percentual (ex: 2.0 para 2% ao mês)"/>
-                            <field name="sicoob_interest_value" 
-                                   invisible="sicoob_interest_code not in ['1']"
-                                   required="sicoob_interest_code in ['1']"
-                                   string="Valor por Dia (R$)"
-                                   help="Valor fixo de juros por dia de atraso"/>
-                            <field name="sicoob_interest_date_start" 
-                                   invisible="sicoob_interest_code == '3'"
-                                   required="sicoob_interest_code != '3'"
-                                   string="Dias para Início"
-                                   help="Número de dias após o vencimento para iniciar a cobrança de juros"/>
-                        </group>
+                                <field name="sicoob_interest_code"/>
+                                <field name="sicoob_interest_percent" 
+                                       invisible="sicoob_interest_code not in ['2']"
+                                       required="sicoob_interest_code in ['2']"
+                                       string="Taxa Mensal (%)"
+                                       help="Taxa mensal de juros em percentual (ex: 2.0 para 2% ao mês)"/>
+                                <field name="sicoob_interest_value" 
+                                       invisible="sicoob_interest_code not in ['1']"
+                                       required="sicoob_interest_code in ['1']"
+                                       string="Valor por Dia (R$)"
+                                       help="Valor fixo de juros por dia de atraso"/>
+                                <field name="sicoob_interest_date_start" 
+                                       invisible="sicoob_interest_code == '3'"
+                                       required="sicoob_interest_code != '3'"
+                                       string="Dias para Início"
+                                       help="Número de dias após o vencimento para iniciar a cobrança de juros"/>
+                            </group>
                         <group string="Configurações de Multa" colspan="2">
-                            <field name="sicoob_penalty_code"/>
-                            <field name="sicoob_penalty_percent" 
-                                   invisible="sicoob_penalty_code not in ['2']"
-                                   required="sicoob_penalty_code in ['2']"
-                                   string="Percentual da Multa (%)"
-                                   help="Percentual de multa a ser aplicado sobre o valor do título"/>
-                            <field name="sicoob_penalty_value" 
-                                   invisible="sicoob_penalty_code not in ['1']"
-                                   required="sicoob_penalty_code in ['1']"
-                                   string="Valor Fixo (R$)"
-                                   help="Valor fixo da multa"/>
-                            <field name="sicoob_penalty_date_start" 
-                                   invisible="sicoob_penalty_code == '0'"
-                                   required="sicoob_penalty_code != '0'"
-                                   string="Dias para Início"
-                                   help="Número de dias após o vencimento para aplicar a multa"/>
-                        </group>
+                                <field name="sicoob_penalty_code"/>
+                                <field name="sicoob_penalty_percent" 
+                                       invisible="sicoob_penalty_code not in ['2']"
+                                       required="sicoob_penalty_code in ['2']"
+                                       string="Percentual da Multa (%)"
+                                       help="Percentual de multa a ser aplicado sobre o valor do título"/>
+                                <field name="sicoob_penalty_value" 
+                                       invisible="sicoob_penalty_code not in ['1']"
+                                       required="sicoob_penalty_code in ['1']"
+                                       string="Valor Fixo (R$)"
+                                       help="Valor fixo da multa"/>
+                                <field name="sicoob_penalty_date_start" 
+                                       invisible="sicoob_penalty_code == '0'"
+                                       required="sicoob_penalty_code != '0'"
+                                       string="Dias para Início"
+                                       help="Número de dias após o vencimento para aplicar a multa"/>
+                            </group>
                         <div class="alert alert-info" role="alert" colspan="4">
                             <i class="fa fa-info-circle"/> Estas configurações serão utilizadas quando o cliente não tiver configurações específicas.
-                        </div>
-                    </group>
+                            </div>
+                        </group>
                 </xpath>
             </field>
         </record>

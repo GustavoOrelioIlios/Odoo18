@@ -538,6 +538,7 @@ class AccountMove(models.Model):
             # Prepara os valores para criação do registro move.boleto
             boleto_vals = {
                 'invoice_id': self.id,
+                'bank_type': 'itau',  # Identifica que é um boleto Itaú
                 'l10n_br_is_barcode': dados_boleto_individual.get('codigo_barras', ''),
                 'l10n_br_is_barcode_formatted': dados_boleto_individual.get('numero_linha_digitavel', ''),
                 'data_limite_pagamento': dados_boleto_individual.get('data_limite_pagamento') or self.invoice_date_due,
@@ -555,7 +556,10 @@ class AccountMove(models.Model):
                 boleto_vals['itau_boleto_id'] = str(uuid.uuid4())
 
             # Verifica se já existe um boleto para esta fatura
-            existing_boleto = self.env['move.boleto'].search([('invoice_id', '=', self.id)], limit=1)
+            existing_boleto = self.env['move.boleto'].search([
+                ('invoice_id', '=', self.id),
+                ('bank_type', '=', 'itau')
+            ], limit=1)
             
             if existing_boleto:
                 # Atualiza o boleto existente

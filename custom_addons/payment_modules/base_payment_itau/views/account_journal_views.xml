@@ -9,10 +9,10 @@
             <xpath expr="//page[@name='integration_settings']//group" position="inside">
                 <group name="itau_settings" invisible="type != 'bank'" col="4">
                     <group string="Configurações de Boleto (Itaú)" colspan="4">
-                        <field name="itau_wallet_code"/>
-                        <field name="l10n_br_is_payment_mode_id"/>
-                        <field name="l10n_br_is_payment_mode_description" readonly="1"/>
-                    </group>
+                            <field name="itau_wallet_code"/>
+                            <field name="l10n_br_is_payment_mode_id"/>
+                            <field name="l10n_br_is_payment_mode_description" readonly="1"/>
+                        </group>
                     <group string="Configurações de Juros" colspan="2">
                         <field name="payment_interest_code"/>
                         <field name="payment_interest_percent" invisible="payment_interest_code in [False, '05', '93']"/>
