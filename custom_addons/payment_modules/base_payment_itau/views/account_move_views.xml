@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- TODO: Remover esta aba específica (Boleto Itaú) da fatura antes de subir para produção.
+             Manter apenas a aba genérica de boletos que mostra todos os boletos relacionados à fatura.
+        -->
+        
         <!-- View para a aba Dados Pagamento -->
         <record id="view_move_form_itau_dados_pagamento" model="ir.ui.view">
             <field name="name">account.move.form.itau.dados.pagamento</field>
