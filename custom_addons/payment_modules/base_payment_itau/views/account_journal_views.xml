@@ -7,10 +7,27 @@
         <field name="arch" type="xml">
             <!-- Adiciona campos do Itaú na aba de Configurações de Integração -->
             <xpath expr="//page[@name='integration_settings']//group" position="inside">
-                <group string="Configurações de Boleto (Itaú)" invisible="type != 'bank'">
-                    <field name="itau_wallet_code"/>
-                    <field name="l10n_br_is_payment_mode_id"/>
-                    <field name="l10n_br_is_payment_mode_description" readonly="1"/>
+                <group name="itau_settings" invisible="type != 'bank'" col="4">
+                    <group string="Configurações de Boleto (Itaú)" colspan="4">
+                        <field name="itau_wallet_code"/>
+                        <field name="l10n_br_is_payment_mode_id"/>
+                        <field name="l10n_br_is_payment_mode_description" readonly="1"/>
+                    </group>
+                    <group string="Configurações de Juros" colspan="2">
+                        <field name="payment_interest_code"/>
+                        <field name="payment_interest_percent" invisible="payment_interest_code in [False, '05', '93']"/>
+                        <field name="payment_interest_value" invisible="payment_interest_code in [False, '05', '90', '91', '92']"/>
+                        <field name="payment_interest_date_start" invisible="payment_interest_code in [False, '05']"/>
+                    </group>
+                    <group string="Configurações de Multa" colspan="2">
+                        <field name="payment_penalty_code"/>
+                        <field name="payment_penalty_percent" invisible="payment_penalty_code in [False, '03', '01']"/>
+                        <field name="payment_penalty_value" invisible="payment_penalty_code in [False, '03', '02']"/>
+                        <field name="payment_penalty_date_start" invisible="payment_penalty_code in [False, '03']"/>
+                    </group>
+                    <div class="alert alert-info" role="alert" colspan="4">
+                        <i class="fa fa-info-circle"/> Estas configurações serão utilizadas quando o cliente não tiver configurações específicas.
+                    </div>
                 </group>
             </xpath>
         </field>

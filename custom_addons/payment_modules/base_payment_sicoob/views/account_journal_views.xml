@@ -9,21 +9,17 @@
             <field name="arch" type="xml">
                 <!-- Adiciona campos do Sicoob na aba de Configurações de Integração -->
                 <xpath expr="//page[@name='integration_settings']//group" position="inside">
-                    <group string="Configurações do Boleto (Sicoob)" invisible="type != 'bank'">
-                        <field name="sicoob_especie_documento" required="1"/>
-                        <field name="sicoob_modality_code" required="1"/>
-                        <field name="narration" placeholder="Mensagens de instrução para o boleto..."/>
-                        <field name="sicoob_emission_type"/>
-                        <field name="sicoob_distribution_type"/>
-                        <field name="sicoob_generate_pdf"/>
-                        <field name="sicoob_generate_pix"/>
-                    </group>
-                    
-                    <group string="Configurações Padrão de Juros e Multa (Sicoob)" invisible="type != 'bank'">
-                        <p class="text-muted mb-3">
-                            Estas configurações serão utilizadas quando o cliente não tiver configurações específicas.
-                        </p>
-                        <group string="Configurações de Juros">
+                    <group name="sicoob_settings" invisible="type != 'bank'" col="4">
+                        <group string="Configurações do Boleto (Sicoob)" colspan="4">
+                            <field name="sicoob_especie_documento" required="1"/>
+                            <field name="sicoob_modality_code" required="1"/>
+                            <field name="narration" placeholder="Mensagens de instrução para o boleto..."/>
+                            <field name="sicoob_emission_type"/>
+                            <field name="sicoob_distribution_type"/>
+                            <field name="sicoob_generate_pdf"/>
+                            <field name="sicoob_generate_pix"/>
+                        </group>
+                        <group string="Configurações de Juros" colspan="2">
                             <field name="sicoob_interest_code"/>
                             <field name="sicoob_interest_percent" 
                                    invisible="sicoob_interest_code not in ['2']"
@@ -41,8 +37,7 @@
                                    string="Dias para Início"
                                    help="Número de dias após o vencimento para iniciar a cobrança de juros"/>
                         </group>
-                        
-                        <group string="Configurações de Multa">
+                        <group string="Configurações de Multa" colspan="2">
                             <field name="sicoob_penalty_code"/>
                             <field name="sicoob_penalty_percent" 
                                    invisible="sicoob_penalty_code not in ['2']"
@@ -60,6 +55,9 @@
                                    string="Dias para Início"
                                    help="Número de dias após o vencimento para aplicar a multa"/>
                         </group>
+                        <div class="alert alert-info" role="alert" colspan="4">
+                            <i class="fa fa-info-circle"/> Estas configurações serão utilizadas quando o cliente não tiver configurações específicas.
+                        </div>
                     </group>
                 </xpath>
             </field>
