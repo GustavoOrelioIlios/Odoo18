@@ -188,6 +188,10 @@ class AccountMove(models.Model):
         """
         Obtém informações de juros e multa específicas do Sicoob.
         
+        Ordem de prioridade:
+        1. Configurações do cliente (partner_id)
+        2. Configurações do diário (payment_journal_id)
+        
         Returns:
             dict: Dicionário com informações de juros e multa
         """
@@ -216,18 +220,19 @@ class AccountMove(models.Model):
             }
         }
         
-        if not journal:
-            _logger.warning("[Sicoob] Nenhum diário encontrado para obter configurações de juros e multa")
-            return result
-        
         # === JUROS ===
-        _logger.info("[Sicoob] Configurações de juros no diário:")
-        _logger.info("- Código: %s", journal.sicoob_interest_code)
-        _logger.info("- Valor: %s", journal.sicoob_interest_value)
-        _logger.info("- Percentual: %s", journal.sicoob_interest_percent)
-        _logger.info("- Dias para início: %s", journal.sicoob_interest_date_start)
+        # Prioridade 1: Cliente
+        if self.partner_id.sicoob_interest_code:
+            result['interest']['code'] = self.partner_id.sicoob_interest_code
+            result['interest']['date_start'] = self.partner_id.sicoob_interest_date_start or 0
+            
+            if self.partner_id.sicoob_interest_code == '1':  # Valor por dia
+                result['interest']['value'] = self.partner_id.sicoob_interest_value
+            elif self.partner_id.sicoob_interest_code == '2':  # Taxa Mensal
+                result['interest']['percent'] = self.partner_id.sicoob_interest_percent
         
-        if journal.sicoob_interest_code:
+        # Prioridade 2: Diário (fallback)
+        elif journal and journal.sicoob_interest_code:
             result['interest']['code'] = journal.sicoob_interest_code
             result['interest']['date_start'] = journal.sicoob_interest_date_start or 0
             
@@ -237,13 +242,18 @@ class AccountMove(models.Model):
                 result['interest']['percent'] = journal.sicoob_interest_percent
         
         # === MULTA ===
-        _logger.info("[Sicoob] Configurações de multa no diário:")
-        _logger.info("- Código: %s", journal.sicoob_penalty_code)
-        _logger.info("- Valor: %s", journal.sicoob_penalty_value)
-        _logger.info("- Percentual: %s", journal.sicoob_penalty_percent)
-        _logger.info("- Dias para início: %s", journal.sicoob_penalty_date_start)
+        # Prioridade 1: Cliente
+        if self.partner_id.sicoob_penalty_code:
+            result['penalty']['code'] = self.partner_id.sicoob_penalty_code
+            result['penalty']['date_start'] = self.partner_id.sicoob_penalty_date_start or 0
+            
+            if self.partner_id.sicoob_penalty_code == '1':  # Valor Fixo
+                result['penalty']['value'] = self.partner_id.sicoob_penalty_value
+            elif self.partner_id.sicoob_penalty_code == '2':  # Percentual
+                result['penalty']['percent'] = self.partner_id.sicoob_penalty_percent
         
-        if journal.sicoob_penalty_code:
+        # Prioridade 2: Diário (fallback)
+        elif journal and journal.sicoob_penalty_code:
             result['penalty']['code'] = journal.sicoob_penalty_code
             result['penalty']['date_start'] = journal.sicoob_penalty_date_start or 0
             

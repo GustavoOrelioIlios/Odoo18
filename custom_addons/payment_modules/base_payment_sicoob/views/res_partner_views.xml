@@ -8,24 +8,28 @@
             <xpath expr="//page[@name='payment_config']/group" position="after">
                 <group string="Configurações Específicas do Sicoob">
                     <group string="Juros">
-                        <field name="payment_interest_code" string="Código de Juros (Sicoob)" 
+                        <field name="sicoob_interest_code" 
                                options="{'no_create': True, 'no_open': True}"/>
-                        <field name="payment_interest_percent" invisible="payment_interest_code not in ['2']"
-                               string="Percentual de Juros (Sicoob)"/>
-                        <field name="payment_interest_value" invisible="payment_interest_code not in ['1']"
-                               string="Valor Fixo de Juros (Sicoob)"/>
-                        <field name="payment_interest_date_start" invisible="payment_interest_code in ['3']"
-                               string="Dias para Início dos Juros (Sicoob)"/>
+                        <field name="sicoob_interest_percent" 
+                               invisible="sicoob_interest_code not in ['2']"
+                               string="Taxa Mensal (%)"/>
+                        <field name="sicoob_interest_value" 
+                               invisible="sicoob_interest_code not in ['1']"
+                               string="Valor por Dia (R$)"/>
+                        <field name="sicoob_interest_date_start" 
+                               invisible="sicoob_interest_code == '3'"/>
                     </group>
                     <group string="Multa">
-                        <field name="payment_penalty_code" string="Código de Multa (Sicoob)"
+                        <field name="sicoob_penalty_code" 
                                options="{'no_create': True, 'no_open': True}"/>
-                        <field name="payment_penalty_percent" invisible="payment_penalty_code not in ['2']"
-                               string="Percentual de Multa (Sicoob)"/>
-                        <field name="payment_penalty_value" invisible="payment_penalty_code not in ['1']"
-                               string="Valor Fixo de Multa (Sicoob)"/>
-                        <field name="payment_penalty_date_start" invisible="payment_penalty_code in ['0']"
-                               string="Dias para Início da Multa (Sicoob)"/>
+                        <field name="sicoob_penalty_percent" 
+                               invisible="sicoob_penalty_code not in ['2']"
+                               string="Percentual (%)"/>
+                        <field name="sicoob_penalty_value" 
+                               invisible="sicoob_penalty_code not in ['1']"
+                               string="Valor Fixo (R$)"/>
+                        <field name="sicoob_penalty_date_start" 
+                               invisible="sicoob_penalty_code == '0'"/>
                     </group>
                 </group>
             </xpath>

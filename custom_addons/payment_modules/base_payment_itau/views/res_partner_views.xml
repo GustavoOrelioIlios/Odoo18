@@ -8,24 +8,28 @@
             <xpath expr="//page[@name='payment_config']/group" position="after">
                 <group string="Configurações Específicas do Itaú">
                     <group string="Juros">
-                        <field name="payment_interest_code" string="Código de Juros (Itaú)" 
+                        <field name="itau_interest_code" 
                                options="{'no_create': True, 'no_open': True}"/>
-                        <field name="payment_interest_percent" invisible="payment_interest_code not in ['90', '91', '92']"
-                               string="Percentual de Juros (Itaú)"/>
-                        <field name="payment_interest_value" invisible="payment_interest_code not in ['93']"
-                               string="Valor Fixo de Juros (Itaú)"/>
-                        <field name="payment_interest_date_start" invisible="payment_interest_code in ['05']"
-                               string="Dias para Início dos Juros (Itaú)"/>
+                        <field name="itau_interest_percent" 
+                               invisible="itau_interest_code not in ['90', '91', '92']"
+                               string="Percentual"/>
+                        <field name="itau_interest_value" 
+                               invisible="itau_interest_code not in ['93']"
+                               string="Valor Diário (R$)"/>
+                        <field name="itau_interest_date_start" 
+                               invisible="itau_interest_code == '05'"/>
                     </group>
                     <group string="Multa">
-                        <field name="payment_penalty_code" string="Código de Multa (Itaú)"
+                        <field name="itau_penalty_code" 
                                options="{'no_create': True, 'no_open': True}"/>
-                        <field name="payment_penalty_percent" invisible="payment_penalty_code not in ['02']"
-                               string="Percentual de Multa (Itaú)"/>
-                        <field name="payment_penalty_value" invisible="payment_penalty_code not in ['01']"
-                               string="Valor Fixo de Multa (Itaú)"/>
-                        <field name="payment_penalty_date_start" invisible="payment_penalty_code in ['03']"
-                               string="Dias para Início da Multa (Itaú)"/>
+                        <field name="itau_penalty_percent" 
+                               invisible="itau_penalty_code not in ['02']"
+                               string="Percentual (%)"/>
+                        <field name="itau_penalty_value" 
+                               invisible="itau_penalty_code not in ['01']"
+                               string="Valor Fixo (R$)"/>
+                        <field name="itau_penalty_date_start" 
+                               invisible="itau_penalty_code == '03'"/>
                     </group>
                 </group>
             </xpath>

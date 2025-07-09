@@ -284,11 +284,11 @@ class AccountMove(models.Model):
     
     def _get_payment_interest_penalty_info(self):
         """
-        Obtém informações de juros e multa aplicando lógica de fallback.
+        Obtém informações de juros e multa específicas do Itaú.
         
         Ordem de prioridade:
         1. Configurações do cliente (partner_id)
-        2. Configurações padrão do diário (partner_bank_id.journal_id)
+        2. Configurações do diário (payment_journal_id)
         
         Returns:
             dict: Dicionário com informações de juros e multa
@@ -312,19 +312,15 @@ class AccountMove(models.Model):
         }
         
         # Obtém o diário correto (do banco destinatário)
-        journal = None
-        if self.partner_bank_id and self.partner_bank_id.journal_id:
-            journal = self.partner_bank_id.journal_id
-        
-
+        journal = self.payment_journal_id
         
         # === JUROS ===
         # Prioridade 1: Cliente
-        if self.partner_id.payment_interest_code:
-            result['interest']['code'] = self.partner_id.payment_interest_code
-            result['interest']['percent'] = self.partner_id.payment_interest_percent
-            result['interest']['value'] = self.partner_id.payment_interest_value
-            result['interest']['date_start'] = self.partner_id.payment_interest_date_start
+        if self.partner_id.itau_interest_code:
+            result['interest']['code'] = self.partner_id.itau_interest_code
+            result['interest']['percent'] = self.partner_id.itau_interest_percent
+            result['interest']['value'] = self.partner_id.itau_interest_value
+            result['interest']['date_start'] = self.partner_id.itau_interest_date_start
         # Prioridade 2: Diário (fallback)
         elif journal and journal.payment_interest_code:
             result['interest']['code'] = journal.payment_interest_code
@@ -334,11 +330,11 @@ class AccountMove(models.Model):
         
         # === MULTA ===
         # Prioridade 1: Cliente
-        if self.partner_id.payment_penalty_code:
-            result['penalty']['code'] = self.partner_id.payment_penalty_code
-            result['penalty']['percent'] = self.partner_id.payment_penalty_percent
-            result['penalty']['value'] = self.partner_id.payment_penalty_value
-            result['penalty']['date_start'] = self.partner_id.payment_penalty_date_start
+        if self.partner_id.itau_penalty_code:
+            result['penalty']['code'] = self.partner_id.itau_penalty_code
+            result['penalty']['percent'] = self.partner_id.itau_penalty_percent
+            result['penalty']['value'] = self.partner_id.itau_penalty_value
+            result['penalty']['date_start'] = self.partner_id.itau_penalty_date_start
         # Prioridade 2: Diário (fallback)
         elif journal and journal.payment_penalty_code:
             result['penalty']['code'] = journal.payment_penalty_code
