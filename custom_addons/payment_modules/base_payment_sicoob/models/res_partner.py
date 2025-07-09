@@ -7,7 +7,6 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
     # === EXTENSÃO DOS CAMPOS GENÉRICOS COM VALORES ESPECÍFICOS DO SICOOB ===
-    
     payment_interest_code = fields.Selection(
         selection_add=[
             ('1', 'Valor por dia'),

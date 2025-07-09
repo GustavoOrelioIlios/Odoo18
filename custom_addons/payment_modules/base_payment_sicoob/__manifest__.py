@@ -28,6 +28,7 @@
     'data': [
         'security/ir.model.access.csv',
         'views/res_partner_bank_views.xml',
+        'views/res_partner_views.xml',
         'views/account_journal_views.xml',
         'views/account_move_views.xml',
         'views/base_payment_sicoob_views.xml',

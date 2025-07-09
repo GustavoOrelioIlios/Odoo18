@@ -7,7 +7,6 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
     # === EXTENSÃO DOS CAMPOS GENÉRICOS COM VALORES ESPECÍFICOS DO ITAÚ ===
-    
     payment_interest_code = fields.Selection(
         selection_add=[
             ('90', 'Percentual Mensal'),

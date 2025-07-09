@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_itau_config" model="ir.ui.view">
+        <field name="name">res.partner.form.itau.config</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base_payment_api.view_partner_form_payment_config"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='payment_config']/group" position="after">
+                <group string="Configurações Específicas do Itaú">
+                    <group string="Juros">
+                        <field name="payment_interest_code" string="Código de Juros (Itaú)" 
+                               options="{'no_create': True, 'no_open': True}"/>
+                        <field name="payment_interest_percent" invisible="payment_interest_code not in ['90', '91', '92']"
+                               string="Percentual de Juros (Itaú)"/>
+                        <field name="payment_interest_value" invisible="payment_interest_code not in ['93']"
+                               string="Valor Fixo de Juros (Itaú)"/>
+                        <field name="payment_interest_date_start" invisible="payment_interest_code in ['05']"
+                               string="Dias para Início dos Juros (Itaú)"/>
+                    </group>
+                    <group string="Multa">
+                        <field name="payment_penalty_code" string="Código de Multa (Itaú)"
+                               options="{'no_create': True, 'no_open': True}"/>
+                        <field name="payment_penalty_percent" invisible="payment_penalty_code not in ['02']"
+                               string="Percentual de Multa (Itaú)"/>
+                        <field name="payment_penalty_value" invisible="payment_penalty_code not in ['01']"
+                               string="Valor Fixo de Multa (Itaú)"/>
+                        <field name="payment_penalty_date_start" invisible="payment_penalty_code in ['03']"
+                               string="Dias para Início da Multa (Itaú)"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo> 
