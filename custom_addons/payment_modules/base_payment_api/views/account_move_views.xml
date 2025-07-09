@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- View base para a aba de dados de pagamento -->
     <record id="view_move_form_dados_pagamento_tab" model="ir.ui.view">
         <field name="name">account.move.form.dados.pagamento.tab</field>
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <notebook position="inside">
-                <page string="Dados Pagamento" name="dados_pagamento">
+            <xpath expr="//notebook" position="inside">
+                <page string="Dados de Pagamento" name="dados_pagamento" 
+                      invisible="move_type not in ['out_invoice', 'out_refund']">
                     <group>
+                        <!-- Placeholder para dados específicos dos bancos -->
                     </group>
                 </page>
-            </notebook>
+            </xpath>
         </field>
     </record>
 </odoo> 

@@ -11,31 +11,21 @@ import uuid
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    sicoob_contract_number = fields.Char(
-        string='Número do Contrato de Cobrança (Sicoob)',
-        help='Número do contrato Sicoob associado à fatura',
-        compute='_compute_sicoob_contract_number',
-        store=True,
-    )
-
-    # sicoob_company_boleto_id = fields.Char(
-    #     string='ID do Boleto na Empresa',
-    #     help='Campo destinado para uso da empresa do beneficiário para identificação do boleto',
-    #     copy=False,
-    #     size=25  # Tamanho máximo de 25 caracteres conforme especificação
-    # )
-
     sicoob_nosso_numero = fields.Char(
         string='Nosso Número (Sicoob)',
-        copy=False,
         readonly=True,
-        help="Número sequencial gerado para identificação do boleto no Sicoob."
+        copy=False,
+        help='Número gerado pelo banco para identificar o título'
+    )
+
+    sicoob_contract_number = fields.Char(
+        string='Número do Contrato',
+        help='Número do contrato de cobrança Sicoob'
     )
 
     sicoob_payment_limit_date = fields.Date(
-        string='Data Limite para Pagamento (Sicoob)',
-        help='Data limite para pagamento do boleto. Se não informada, será igual à data de vencimento',
-        copy=False
+        string='Data Limite para Pagamento',
+        help='Data limite para pagamento do título. Se não informada, será considerada a data de vencimento.'
     )
 
     sicoob_especie_documento = fields.Selection(

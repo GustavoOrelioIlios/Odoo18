@@ -108,6 +108,35 @@ class AccountMove(models.Model):
         help="Campo para mensagens adicionais ou notas relacionadas à cobrança desta fatura."
     )
     
+    itau_own_number = fields.Char(
+        string='Nosso Número (Itaú)',
+        readonly=True,
+        copy=False,
+        help='Número gerado pelo banco para identificar o título'
+    )
+
+    itau_protest_code = fields.Selection([
+        ('1', 'Protestar'),
+        ('3', 'Não Protestar'),
+    ], string='Código de Protesto',
+       help='Define se o título deve ser protestado após o vencimento')
+
+    itau_protest_days = fields.Integer(
+        string='Dias para Protesto',
+        help='Número de dias após o vencimento para protestar o título'
+    )
+
+    itau_negativation_code = fields.Selection([
+        ('2', 'Negativar'),
+        ('3', 'Não Negativar'),
+    ], string='Código de Negativação',
+       help='Define se o título deve ser negativado após o vencimento')
+
+    itau_negativation_days = fields.Integer(
+        string='Dias para Negativação',
+        help='Número de dias após o vencimento para negativar o título'
+    )
+    
     @api.constrains('itau_protest_days')
     def _check_protest_days(self):
         for record in self:
