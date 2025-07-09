@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        
-        <!-- Formulário estendido para res.partner.bank -->
         <record id="view_partner_bank_form_itau" model="ir.ui.view">
             <field name="name">res.partner.bank.form.itau</field>
             <field name="model">res.partner.bank</field>
@@ -10,17 +8,14 @@
             <field name="arch" type="xml">
                 <xpath expr="//form/sheet" position="inside">
                     
-                    <!-- Notebook com abas específicas do Itaú -->
                     <notebook>
                         <page string="Configurações Itaú" name="itau_config">
                             
-                            <!-- Grupo de Identificação Itaú -->
                             <group string="Identificação Itaú">
                                 <field name="itau_beneficiary_id" placeholder="Ex: 150000052061"/>
                                 <field name="itau_nome_cobranca" placeholder="Nome para aparecer na cobrança"/>
                             </group>
                             
-                            <!-- Grupo de Endereço Específico - Simplificado -->
                             <group string="Endereço Específico para Cobrança">
                                 <field name="itau_endereco_cobranca_id" 
                                        options="{'no_create': True, 'no_open': True, 'no_create_edit': True}"
@@ -35,8 +30,6 @@
             </field>
         </record>
         
-        
-        <!-- Lista estendida para res.partner.bank -->
         <record id="view_partner_bank_tree_itau" model="ir.ui.view">
             <field name="name">res.partner.bank.tree.itau</field>
             <field name="model">res.partner.bank</field>
@@ -48,9 +41,7 @@
                 </xpath>
             </field>
         </record>
-        
-        
-        <!-- Pesquisa estendida para res.partner.bank -->
+
         <record id="view_partner_bank_search_itau" model="ir.ui.view">
             <field name="name">res.partner.bank.search.itau</field>
             <field name="model">res.partner.bank</field>

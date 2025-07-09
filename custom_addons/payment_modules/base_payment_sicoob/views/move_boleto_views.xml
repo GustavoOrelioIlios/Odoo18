@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Herança da Lista de Boletos -->
     <record id="view_move_boleto_tree_sicoob" model="ir.ui.view">
         <field name="name">move.boleto.tree.sicoob</field>
         <field name="model">move.boleto</field>
@@ -8,12 +7,10 @@
         <field name="arch" type="xml">
             <field name="data_limite_pagamento" position="after">
                 <field name="sicoob_nosso_numero" invisible="bank_type != 'sicoob'"/>
-                <!-- <field name="sicoob_company_boleto_id" invisible="bank_type != 'sicoob'"/> -->
             </field>
         </field>
     </record>
 
-    <!-- Herança do Formulário de Boleto -->
     <record id="view_move_boleto_form_sicoob" model="ir.ui.view">
         <field name="name">move.boleto.form.sicoob</field>
         <field name="model">move.boleto</field>
@@ -27,7 +24,6 @@
         </field>
     </record>
 
-    <!-- Ação específica para Boletos Sicoob -->
     <record id="action_move_boleto_sicoob" model="ir.actions.act_window">
         <field name="name">Boletos Bancários Sicoob</field>
         <field name="res_model">move.boleto</field>
@@ -44,7 +40,6 @@
         </field>
     </record>
 
-    <!-- Menu Item para Boletos Sicoob -->
     <menuitem 
         id="menu_move_boleto_sicoob"
         name="Boletos Sicoob"

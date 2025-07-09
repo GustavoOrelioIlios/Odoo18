@@ -35,8 +35,6 @@ class BasePaymentSicoob(models.Model):
         self.ensure_one()
         
         token = self._get_sicoob_token()
-        _logger.info("[Sicoob] Token(AQUI): %s", token)
-        _logger.info("[Sicoob] Client ID(AQUI): %s", self.client_id)
         correlation_id = f"odoo-sicoob-{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
         return {
@@ -91,16 +89,11 @@ class BasePaymentSicoob(models.Model):
 
             payload_data = invoice._get_sicoob_boleto_details_data()
 
-            _logger.info("[Sicoob] Espécie do documento configurada no diário: %s", invoice.journal_id.sicoob_especie_documento)
-            _logger.info("[Sicoob] Espécie do documento no payload: %s", payload_data.get('codigoEspecieDocumento'))
-
             sucesso, dados_validados, mensagem = SicoobBoletoValidator.validar_payload(payload_data)
             if not sucesso:
                 raise UserError(_(
                     "Erros de validação encontrados:\n%s"
                 ) % mensagem)
-
-            _logger.info("[Sicoob] Espécie do documento após validação: %s", dados_validados.get('codigoEspecieDocumento'))
 
             invoice.write({
                 'test_json_enviado': json.dumps(dados_validados, indent=2, ensure_ascii=False)
@@ -108,22 +101,12 @@ class BasePaymentSicoob(models.Model):
 
             api_url = 'https://sandbox.sicoob.com.br/sicoob/sandbox/cobranca-bancaria/v3/boletos'
 
-            _logger.info("[Sicoob] URL da API AQUI: %s", api_url)
-            _logger.info("[Sicoob] Headers da requisição: %s", json.dumps(headers, indent=2, ensure_ascii=False))
-            _logger.info("[Sicoob] JSON enviado: %s", json.dumps(dados_validados, indent=2, ensure_ascii=False))
-
             response = requests.post(
                 api_url,
                 headers=headers,
                 json=dados_validados,
                 timeout=self.timeout
             )
-
-            _logger.info("[Sicoob] Resposta da API AQUI: %s", response.json())
-
-            _logger.info("[Sicoob] Status code da resposta: %s", response.status_code)
-            _logger.info("[Sicoob] Headers da resposta: %s", dict(response.headers))
-            _logger.info("[Sicoob] Corpo da resposta: %s", response.text[:2000])
 
             response_json = None
             try:
@@ -138,7 +121,6 @@ class BasePaymentSicoob(models.Model):
                     'sicoob_date': fields.Datetime.now(),
                     'sicoob_error_message': False,
                 })
-                _logger.info("Boleto Sicoob emitido com sucesso para fatura %s", invoice.name)
 
                 if response_json and response_json.get('resultado'):
                     invoice._create_boleto_record_from_sicoob_api_response(response_json.get('resultado'))

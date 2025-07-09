@@ -4,8 +4,6 @@
         <!-- TODO: Remover esta aba específica (Boleto Itaú) da fatura antes de subir para produção.
              Manter apenas a aba genérica de boletos que mostra todos os boletos relacionados à fatura.
         -->
-        
-        <!-- View para a aba Dados Pagamento -->
         <record id="view_move_form_itau_dados_pagamento" model="ir.ui.view">
             <field name="name">account.move.form.itau.dados.pagamento</field>
             <field name="model">account.move</field>
@@ -19,7 +17,6 @@
             </field>
         </record>
 
-        <!-- View para o modelo move.boleto -->
         <record id="view_move_boleto_tree" model="ir.ui.view">
             <field name="name">move.boleto.tree</field>
             <field name="model">move.boleto</field>
@@ -33,8 +30,7 @@
                 </list>
             </field>
         </record>
-        
-        <!-- View principal do boleto Itaú -->
+
         <record id="view_move_form_itau_boleto" model="ir.ui.view">
             <field name="name">account.move.form.itau.boleto</field>
             <field name="model">account.move</field>

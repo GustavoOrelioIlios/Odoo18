@@ -5,7 +5,6 @@
         <field name="model">account.journal</field>
         <field name="inherit_id" ref="base_payment_api.view_account_journal_form_payment_config"/>
         <field name="arch" type="xml">
-            <!-- Adiciona campos do Itaú na aba de Configurações de Integração -->
             <xpath expr="//page[@name='integration_settings']//group" position="inside">
                 <group name="itau_settings" invisible="type != 'bank'" col="4">
                     <group string="Configurações de Boleto (Itaú)" colspan="4">

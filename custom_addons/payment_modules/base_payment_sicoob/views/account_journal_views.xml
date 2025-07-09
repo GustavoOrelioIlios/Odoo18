@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Vista de formulário herdada para account.journal -->
         <record id="view_account_journal_form_inherited_sicoob" model="ir.ui.view">
             <field name="name">account.journal.form.inherited.sicoob</field>
             <field name="model">account.journal</field>
             <field name="inherit_id" ref="base_payment_api.view_account_journal_form_payment_config"/>
             <field name="arch" type="xml">
-                <!-- Adiciona campos do Sicoob na aba de Configurações de Integração -->
                 <xpath expr="//page[@name='integration_settings']//group" position="inside">
                     <group name="sicoob_settings" invisible="type != 'bank'" col="4">
                         <group string="Configurações do Boleto (Sicoob)" colspan="4">

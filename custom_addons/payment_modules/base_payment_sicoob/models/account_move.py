@@ -180,12 +180,8 @@ class AccountMove(models.Model):
             dict: Dicionário com informações de juros e multa
         """
         self.ensure_one()
-        _logger = logging.getLogger(__name__)
         
         journal = self.payment_journal_id
-        _logger.info("[Sicoob] Obtendo informações de juros e multa do diário %s (id: %s)", 
-                    journal.name if journal else 'N/A', 
-                    journal.id if journal else 'N/A')
         
         result = {
             'interest': {
@@ -288,7 +284,6 @@ class AccountMove(models.Model):
             dict: Estrutura de dados para API do Sicoob
         """
         self.ensure_one()
-        _logger = logging.getLogger(__name__)
         
         if not self.sicoob_nosso_numero:
             nosso_numero_gerado = self.env['ir.sequence'].next_by_code('sicoob.nosso.numero')
@@ -297,9 +292,6 @@ class AccountMove(models.Model):
             self.sicoob_nosso_numero = nosso_numero_gerado
 
         journal = self.payment_journal_id
-        _logger.info("[Sicoob] Usando diário %s (id: %s) para configurações do boleto", 
-                    journal.name if journal else 'N/A', 
-                    journal.id if journal else 'N/A')
         
         if not journal:
             raise UserError(_('A fatura precisa ter uma forma de pagamento com diário Sicoob configurado.'))
@@ -342,47 +334,27 @@ class AccountMove(models.Model):
         if self.sicoob_contract_number:
             boleto_data['numeroContratoCobranca'] = int(self.sicoob_contract_number)
         
-        _logger.info("[Sicoob] Adicionando informações de juros ao boleto:")
-        _logger.info("- Código de juros recebido: %s", juros_multa_info['interest']['code'])
-        
         boleto_data['tipoJurosMora'] = juros_multa_info['interest']['code'] or '3'
-        _logger.info("- tipoJurosMora definido como: %s", boleto_data['tipoJurosMora'])
         
         if juros_multa_info['interest']['code'] and juros_multa_info['interest']['code'] != '3':
             data_juros = self.invoice_date_due + timedelta(days=juros_multa_info['interest']['date_start'])
             boleto_data['dataJurosMora'] = data_juros.strftime('%Y-%m-%d')
-            _logger.info("- Data de juros calculada: %s (vencimento: %s + %s dias)", 
-                        boleto_data['dataJurosMora'], 
-                        self.invoice_date_due, 
-                        juros_multa_info['interest']['date_start'])
             
             if juros_multa_info['interest']['code'] == '1':
                 boleto_data['valorJurosMora'] = juros_multa_info['interest']['value']
-                _logger.info("- Valor de juros por dia: %s", boleto_data['valorJurosMora'])
             elif juros_multa_info['interest']['code'] == '2':
                 boleto_data['valorJurosMora'] = juros_multa_info['interest']['percent']
-                _logger.info("- Percentual de juros mensal: %s", boleto_data['valorJurosMora'])
-        
-        _logger.info("[Sicoob] Adicionando informações de multa ao boleto:")
-        _logger.info("- Código de multa recebido: %s", juros_multa_info['penalty']['code'])
         
         boleto_data['tipoMulta'] = juros_multa_info['penalty']['code'] or '0'
-        _logger.info("- tipoMulta definido como: %s", boleto_data['tipoMulta'])
         
         if juros_multa_info['penalty']['code'] and juros_multa_info['penalty']['code'] != '0':
             data_multa = self.invoice_date_due + timedelta(days=juros_multa_info['penalty']['date_start'])
             boleto_data['dataMulta'] = data_multa.strftime('%Y-%m-%d')
-            _logger.info("- Data de multa calculada: %s (vencimento: %s + %s dias)", 
-                        boleto_data['dataMulta'], 
-                        self.invoice_date_due, 
-                        juros_multa_info['penalty']['date_start'])
             
             if juros_multa_info['penalty']['code'] == '1':
                 boleto_data['valorMulta'] = juros_multa_info['penalty']['value']
-                _logger.info("- Valor fixo de multa: %s", boleto_data['valorMulta'])
             elif juros_multa_info['penalty']['code'] == '2':
                 boleto_data['valorMulta'] = juros_multa_info['penalty']['percent']
-                _logger.info("- Percentual de multa: %s", boleto_data['valorMulta'])
         
         if desconto_info:
             boleto_data.update({
@@ -391,23 +363,12 @@ class AccountMove(models.Model):
                 'valorPrimeiroDesconto': desconto_info.get('valorPrimeiroDesconto'),
             })
         
-        _logger.info("[Sicoob] Estrutura final de juros e multa no boleto:")
-        _logger.info("=== JUROS ===")
-        _logger.info("- tipoJurosMora: %s", boleto_data.get('tipoJurosMora'))
-        _logger.info("- dataJurosMora: %s", boleto_data.get('dataJurosMora'))
-        _logger.info("- valorJurosMora: %s", boleto_data.get('valorJurosMora'))
-        _logger.info("=== MULTA ===")
-        _logger.info("- tipoMulta: %s", boleto_data.get('tipoMulta'))
-        _logger.info("- dataMulta: %s", boleto_data.get('dataMulta'))
-        _logger.info("- valorMulta: %s", boleto_data.get('valorMulta'))
-        
         return boleto_data
 
     def action_emitir_boleto_sicoob(self):
         """Emite um boleto Sicoob para a fatura atual"""
         self.ensure_one()
         _logger = logging.getLogger(__name__)
-        _logger.info("[Sicoob] Iniciando emissão de boleto para fatura %s", self.name)
 
         if self.state != 'posted':
             _logger.error("[Sicoob] Fatura %s não está confirmada (state: %s)", self.name, self.state)
@@ -437,11 +398,6 @@ class AccountMove(models.Model):
             ) % (self.company_id.name, self.company_id.name))
 
         bank_account = self.company_id.sicoob_partner_bank_id
-        _logger.info("[Sicoob] Detalhes da conta bancária:")
-        _logger.info("- ID: %s", bank_account.id)
-        _logger.info("- Número da Conta: %s", bank_account.acc_number)
-        _logger.info("- Banco: %s", bank_account.bank_id.name if bank_account.bank_id else 'Não configurado')
-        _logger.info("- Número Cliente Sicoob: %s", bank_account.sicoob_client_number)
 
         if not bank_account.bank_id:
             _logger.error("[Sicoob] Conta bancária %s não tem banco configurado", bank_account.acc_number)
@@ -465,8 +421,6 @@ class AccountMove(models.Model):
             _logger.error("[Sicoob] Não há integração Sicoob configurada para a empresa %s", self.company_id.name)
             raise UserError(_('Não há uma integração Sicoob configurada para esta empresa.'))
 
-        _logger.info("[Sicoob] Integração encontrada (id: %s)", sicoob_api.id)
-
         return sicoob_api._emitir_boleto_sicoob(self)
 
     def _create_boleto_record_from_sicoob_api_response(self, response_data):
@@ -475,7 +429,6 @@ class AccountMove(models.Model):
         """
         self.ensure_one()
         _logger = logging.getLogger(__name__)
-        _logger.info("[Sicoob] Criando registro move.boleto a partir da resposta da API para a fatura %s", self.name)
 
         if not response_data:
             _logger.warning("[Sicoob] A resposta da API (response_data) está vazia. Não é possível registrar o boleto para a fatura %s.", self.name)
@@ -500,8 +453,6 @@ class AccountMove(models.Model):
         ], limit=1)
 
         if existing_boleto:
-            _logger.info("[Sicoob] Atualizando boleto existente (ID: %s) para a fatura %s.", existing_boleto.id, self.name)
             existing_boleto.write(boleto_vals)
         else:
-            _logger.info("[Sicoob] Criando novo boleto para a fatura %s.", self.name)
             self.env['move.boleto'].create(boleto_vals) 

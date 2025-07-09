@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Lista de Boletos -->
     <record id="view_move_boleto_tree" model="ir.ui.view">
         <field name="name">move.boleto.tree</field>
         <field name="model">move.boleto</field>
@@ -15,7 +14,6 @@
         </field>
     </record>
 
-    <!-- Formulário de Boleto -->
     <record id="view_move_boleto_form" model="ir.ui.view">
         <field name="name">move.boleto.form</field>
         <field name="model">move.boleto</field>
@@ -41,7 +39,6 @@
         </field>
     </record>
 
-    <!-- Ação do Menu -->
     <record id="action_move_boleto" model="ir.actions.act_window">
         <field name="name">Todos os Boletos Bancários</field>
         <field name="res_model">move.boleto</field>
@@ -56,14 +53,12 @@
         </field>
     </record>
 
-    <!-- Menu Principal de Boletos -->
     <menuitem 
         id="menu_move_boleto_root"
         name="Boletos Bancários"
         parent="account.menu_finance_receivables"
         sequence="10"/>
 
-    <!-- Submenu para Todos os Boletos -->
     <menuitem 
         id="menu_move_boleto_all"
         name="Todos os Boletos"

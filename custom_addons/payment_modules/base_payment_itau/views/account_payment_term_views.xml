@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        
-        <!-- View para account.payment.term.discount -->
         <record id="view_payment_term_discount_list" model="ir.ui.view">
             <field name="name">account.payment.term.discount.list</field>
             <field name="model">account.payment.term.discount</field>
@@ -34,17 +32,14 @@
             </field>
         </record>
 
-        <!-- Extensão do formulário de account.payment.term -->
         <record id="view_payment_term_form_inherited_discount" model="ir.ui.view">
             <field name="name">account.payment.term.form.inherited.discount</field>
             <field name="model">account.payment.term</field>
             <field name="inherit_id" ref="account.view_payment_term_form"/>
             <field name="arch" type="xml">
                 
-                <!-- Adiciona seção de configurações Itaú após todos os grupos existentes -->
                 <xpath expr="//sheet/group[last()]" position="after">
 
-                    <!-- Seção de configurações do Itaú -->
                     <group string="Configurações de Desconto">
                         <group string="Tipo de Desconto">
                             <field name="itau_discount_code"/>
@@ -59,12 +54,10 @@
                         <group string="Condições de Desconto" invisible="itau_discount_code == '00'">
                             <field name="discount_line_ids" nolabel="1" colspan="2">
                                 <list editable="bottom" create="true" delete="true">
-                                    <!-- Campos invisíveis para computações -->
                                     <field name="is_percentage_type" column_invisible="1"/>
                                     <field name="value_label" column_invisible="1"/>
                                     
                                     <field name="days" string="Dias após emissão"/>
-                                    <!-- Mostra apenas uma coluna por vez baseado no tipo -->
                                     <field name="value" 
                                            string="Valor (R$)" 
                                            column_invisible="parent.itau_discount_code in ['02', '90']"/>
@@ -81,14 +74,11 @@
             </field>
         </record>
 
-        <!-- View em lista melhorada para account.payment.term -->
         <record id="view_payment_term_tree_inherited_discount" model="ir.ui.view">
             <field name="name">account.payment.term.tree.inherited.discount</field>
             <field name="model">account.payment.term</field>
             <field name="inherit_id" ref="account.view_payment_term_tree"/>
             <field name="arch" type="xml">
-                
-                <!-- Adiciona coluna para mostrar tipo de desconto -->
                 <field name="company_id" position="after">
                     <field name="itau_discount_code" 
                            string="Desconto Itaú"

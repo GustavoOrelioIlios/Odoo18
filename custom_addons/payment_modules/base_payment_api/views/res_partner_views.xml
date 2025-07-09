@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Vista de formulário para res.partner - Configurações de Pagamento -->
     <record id="view_partner_form_payment_config" model="ir.ui.view">
         <field name="name">res.partner.form.payment.config</field>
         <field name="model">res.partner</field>
@@ -14,7 +13,6 @@
                             Se algum campo não estiver preenchido, o sistema utilizará as configurações padrão do diário.
                         </div>
                     </group>
-                    <!-- As seções específicas de cada banco serão inseridas aqui -->
                 </page>
             </xpath>
         </field>

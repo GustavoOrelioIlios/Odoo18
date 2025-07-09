@@ -76,8 +76,6 @@ class BasePaymentItau(models.Model):
                     
                     record._update_connection_status(True, token=token)
                     
-                    _logger.info('Token OAuth2 gerado com sucesso para %s', record.name)
-                    
                     return record._refresh_view()
                     
                 except Exception as e:
@@ -473,7 +471,6 @@ class BasePaymentItau(models.Model):
                     message_type='notification'
                 )
             
-            _logger.info('Teste POST boleto com payload completo - Status: %s', response.status_code)
             return self._refresh_view()
                 
         except Exception as e:

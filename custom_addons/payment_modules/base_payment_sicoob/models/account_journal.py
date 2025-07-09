@@ -141,12 +141,6 @@ class AccountJournal(models.Model):
         default=False
     )
 
-    @api.onchange('sicoob_especie_documento')
-    def _onchange_sicoob_especie_documento(self):
-        """Log para debug do valor do campo"""
-        _logger = logging.getLogger(__name__)
-        _logger.info("[Sicoob] Valor do campo sicoob_especie_documento alterado para: %s", self.sicoob_especie_documento)
-
     @api.onchange('sicoob_interest_code')
     def _onchange_sicoob_interest_code(self):
         """Limpa campos relacionados quando o código de juros é alterado"""

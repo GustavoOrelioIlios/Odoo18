@@ -5,11 +5,8 @@ from odoo.exceptions import UserError, ValidationError
 from datetime import datetime
 import json
 import uuid
-import logging
 
 from .pydantic_models import ValidadorBoleto, ValidadorBeneficiario
-
-_logger = logging.getLogger(__name__)
 
 
 class AccountMove(models.Model):

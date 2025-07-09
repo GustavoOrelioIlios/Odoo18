@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
-    <!-- List View (antigo Tree View) -->
     <record id="view_base_payment_api_list" model="ir.ui.view">
         <field name="name">base.payment.api.list</field>
         <field name="model">base.payment.api</field>
@@ -22,7 +20,6 @@
         </field>
     </record>
 
-    <!-- Form View -->
     <record id="view_base_payment_api_form" model="ir.ui.view">
         <field name="name">base.payment.api.form</field>
         <field name="model">base.payment.api</field>
@@ -79,7 +76,6 @@
         </field>
     </record>
 
-    <!-- Search View -->
     <record id="view_base_payment_api_search" model="ir.ui.view">
         <field name="name">base.payment.api.search</field>
         <field name="model">base.payment.api</field>
@@ -108,7 +104,6 @@
         </field>
     </record>
 
-    <!-- Action -->
     <record id="action_base_payment_api" model="ir.actions.act_window">
         <field name="name">Configurações de API de Pagamento</field>
         <field name="res_model">base.payment.api</field>
@@ -125,7 +120,6 @@
         </field>
     </record>
 
-    <!-- Menu -->
     <menuitem id="menu_payment_integrations_root"
               name="Integrações de Pagamento"
               web_icon="base_payment_api,static/description/icon.png"

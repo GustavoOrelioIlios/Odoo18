@@ -4,10 +4,6 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 import requests
 import json
-import logging
-
-_logger = logging.getLogger(__name__)
-
 
 class BasePaymentAPI(models.Model):
     _name = 'base.payment.api'

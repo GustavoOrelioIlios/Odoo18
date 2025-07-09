@@ -4,14 +4,11 @@
         <!-- TODO: Remover esta aba específica (Boleto Sicoob) da fatura antes de subir para produção.
              Manter apenas a aba genérica de boletos que mostra todos os boletos relacionados à fatura.
         -->
-
-        <!-- Adiciona botão "Emitir Boleto Sicoob" no cabeçalho da fatura -->
         <record id="view_move_form_inherit_sicoob" model="ir.ui.view">
             <field name="name">account.move.form.inherit.sicoob</field>
             <field name="model">account.move</field>
             <field name="inherit_id" ref="base_payment_api.view_move_form_dados_pagamento_tab"/>
             <field name="arch" type="xml">
-                <!-- Adiciona botão no header -->
                 <xpath expr="//header" position="inside">
                     <button name="action_emitir_boleto_sicoob"
                             type="object"
