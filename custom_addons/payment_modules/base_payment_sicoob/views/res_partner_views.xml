@@ -17,7 +17,7 @@
                                invisible="sicoob_interest_code not in ['1']"
                                string="Valor por Dia (R$)"/>
                         <field name="sicoob_interest_date_start" 
-                               invisible="sicoob_interest_code == '3'"/>
+                               invisible="not sicoob_interest_code or sicoob_interest_code == '3'"/>
                     </group>
                     <group string="Multa">
                         <field name="sicoob_penalty_code" 
@@ -29,7 +29,7 @@
                                invisible="sicoob_penalty_code not in ['1']"
                                string="Valor Fixo (R$)"/>
                         <field name="sicoob_penalty_date_start" 
-                               invisible="sicoob_penalty_code == '0'"/>
+                               invisible="not sicoob_penalty_code or sicoob_penalty_code == '0'"/>
                     </group>
                 </group>
             </xpath>

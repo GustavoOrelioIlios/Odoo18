@@ -17,7 +17,7 @@
                                invisible="itau_interest_code not in ['93']"
                                string="Valor Diário (R$)"/>
                         <field name="itau_interest_date_start" 
-                               invisible="itau_interest_code == '05'"/>
+                               invisible="not itau_interest_code or itau_interest_code == '05'"/>
                     </group>
                     <group string="Multa">
                         <field name="itau_penalty_code" 
@@ -29,7 +29,7 @@
                                invisible="itau_penalty_code not in ['01']"
                                string="Valor Fixo (R$)"/>
                         <field name="itau_penalty_date_start" 
-                               invisible="itau_penalty_code == '03'"/>
+                               invisible="not itau_penalty_code or itau_penalty_code == '03'"/>
                     </group>
                 </group>
             </xpath>
