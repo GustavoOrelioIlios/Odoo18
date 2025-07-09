@@ -54,7 +54,6 @@ class AccountJournal(models.Model):
         required=True
     )
 
-    # === CAMPOS DE JUROS SICOOB ===
     sicoob_interest_code = fields.Selection([
         ('1', 'Valor por dia'),
         ('2', 'Taxa Mensal'),
@@ -81,7 +80,6 @@ class AccountJournal(models.Model):
         help='Número de dias após o vencimento para iniciar a cobrança de juros'
     )
 
-    # === CAMPOS DE MULTA SICOOB ===
     sicoob_penalty_code = fields.Selection([
         ('1', 'Valor Fixo'),
         ('2', 'Percentual'),
@@ -108,7 +106,6 @@ class AccountJournal(models.Model):
         help='Número de dias após o vencimento para iniciar a cobrança da multa'
     )
 
-    # Novos campos
     narration = fields.Text(
         string='Mensagens de Instrução',
         help='Mensagens de instrução para o boleto Sicoob'

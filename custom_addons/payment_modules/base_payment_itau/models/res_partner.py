@@ -6,7 +6,6 @@ from odoo import models, fields
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    # === CAMPOS ESPECÍFICOS DO ITAÚ ===
     itau_interest_code = fields.Selection([
         ('90', 'Percentual Mensal'),
         ('91', 'Percentual Diário'),

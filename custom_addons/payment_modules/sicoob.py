@@ -55,7 +55,6 @@ headers = {
   'Accept': 'application/json',
   'client_id': '9b5e603e428cc477a2841e2683c92d21',
   'User-Agent': 'PostmanRuntime/7.4.1',
-  # 'Cookie': '3335c623dfb80f915ea5457e9d5d4421=9b5b7462af495d4f602fe8d773abf45d; TS016f8952=017a3a183bdaaf76925393b75c52c6bf3132dfdb99c4045312a35e5384c4c0e1fff3052c6d1d0111a1632b2a3831f55a16212d8ef7'
 }
 
 response = requests.request("POST", url, headers=headers, data=payload)

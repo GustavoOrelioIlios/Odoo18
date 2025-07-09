@@ -7,7 +7,7 @@ from odoo.exceptions import ValidationError
 class AccountPaymentTermSicoobDiscount(models.Model):
     _name = 'account.payment.term.sicoob.discount'
     _description = 'Linha de Desconto do Termo de Pagamento (Sicoob)'
-    _order = 'days desc, id'  # Ordem decrescente por padrão para API
+    _order = 'days desc, id'
 
     payment_term_id = fields.Many2one(
         'account.payment.term',
@@ -36,21 +36,18 @@ class AccountPaymentTermSicoobDiscount(models.Model):
              "   • Exemplo: 10.50 = R$ 10,50 de desconto"
     )
     
-    # Campo computado para detectar se é percentual ou valor
     is_percentage_type = fields.Boolean(
         string='É Tipo Percentual',
         compute='_compute_discount_type',
         help="Indica se o tipo de desconto do parent é percentual"
     )
     
-    # Campo computado para label dinâmico
     value_label = fields.Char(
         string='Label do Valor',
         compute='_compute_discount_type',
         help="Label que muda conforme tipo"
     )
     
-    # Campos computados para melhor visualização
     display_info = fields.Char(
         string='Resumo',
         compute='_compute_display_info',
@@ -62,10 +59,8 @@ class AccountPaymentTermSicoobDiscount(models.Model):
         """Computa se é tipo percentual e o label correto"""
         for record in self:
             if record.payment_term_id and record.payment_term_id.sicoob_discount_code:
-                # Verifica se é tipo percentual
                 record.is_percentage_type = record.payment_term_id.sicoob_discount_code in ['2', '5', '6']
                 
-                # Define label baseado no tipo
                 if record.is_percentage_type:
                     record.value_label = 'Percentual (%)'
                 else:
@@ -82,9 +77,9 @@ class AccountPaymentTermSicoobDiscount(models.Model):
                 tipo = dict(record.payment_term_id._fields['sicoob_discount_code'].selection).get(
                     record.payment_term_id.sicoob_discount_code, 'N/A'
                 )
-                if record.payment_term_id.sicoob_discount_code in ['2', '5', '6']:  # Percentual
+                if record.payment_term_id.sicoob_discount_code in ['2', '5', '6']:
                     record.display_info = f"{record.days} dias: {record.value}% ({tipo})"
-                else:  # Valor fixo
+                else:
                     record.display_info = f"{record.days} dias: R$ {record.value:.2f} ({tipo})"
             else:
                 record.display_info = f"{record.days} dias: {record.value}"
@@ -103,7 +98,6 @@ class AccountPaymentTermSicoobDiscount(models.Model):
             if record.value <= 0:
                 raise ValidationError(_("O valor do desconto deve ser maior que zero."))
             
-            # Validação adicional para percentual
             if (record.payment_term_id and 
                 record.payment_term_id.sicoob_discount_code in ['2', '5', '6'] and 
                 record.value > 100):

@@ -7,7 +7,6 @@ from odoo.exceptions import UserError
 class ResCompany(models.Model):
     _inherit = 'res.company'
     
-    # Configuração Sicoob para a empresa
     sicoob_payment_api_id = fields.Many2one(
         'base.payment.api',
         string='Configuração API Sicoob',
@@ -15,7 +14,6 @@ class ResCompany(models.Model):
         help='Configuração da API Sicoob que será usada para emissão de boletos desta empresa'
     )
     
-    # Campo para selecionar qual conta bancária Sicoob usar
     sicoob_partner_bank_id = fields.Many2one(
         'res.partner.bank',
         string='Conta Bancária Sicoob',
@@ -35,5 +33,4 @@ class ResCompany(models.Model):
                 'Configure em: Configurações → Empresas → %s → Configurações Sicoob → Conta Bancária Sicoob'
             ) % (self.name, self.name))
         
-        # Usa o método da conta bancária que já tem toda a lógica
         return self.sicoob_partner_bank_id.get_sicoob_beneficiario_data() 

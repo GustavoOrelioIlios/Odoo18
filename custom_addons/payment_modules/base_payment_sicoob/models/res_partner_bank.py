@@ -42,11 +42,10 @@ class ResPartnerBank(models.Model):
         """Validação do número do cliente Sicoob"""
         for record in self:
             if record.sicoob_client_number:
-                # Remove caracteres não numéricos para validação
                 clean_number = ''.join(filter(str.isdigit, record.sicoob_client_number))
                 if not clean_number:
                     raise ValidationError(_('O número do cliente Sicoob deve conter pelo menos um dígito numérico.'))
-                if len(clean_number) > 20:  # Limite máximo de 20 dígitos
+                if len(clean_number) > 20:
                     raise ValidationError(_('O número do cliente Sicoob não pode ter mais de 20 dígitos.'))
 
     def get_sicoob_beneficiario_data(self):
@@ -58,14 +57,12 @@ class ResPartnerBank(models.Model):
         """
         self.ensure_one()
         
-        # Determina tipo de pessoa
         company_type = self.partner_id.company_type
         if company_type == 'company':
             tipo_pessoa_codigo = 'J'
             numero_cadastro = self.partner_id.vat or ''
         else:
             tipo_pessoa_codigo = 'F'
-            # Para pessoa física, assume que o VAT contém CPF
             numero_cadastro = self.partner_id.vat or ''
         
         return {

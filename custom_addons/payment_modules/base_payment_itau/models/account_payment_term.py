@@ -7,7 +7,6 @@ from odoo.exceptions import ValidationError
 class AccountPaymentTerm(models.Model):
     _inherit = 'account.payment.term'
 
-    # Campo para definir o tipo de desconto conforme API Itaú
     itau_discount_code = fields.Selection([
         ('00', 'Sem Desconto'),
         ('01', 'Valor Fixo'),
@@ -25,7 +24,6 @@ class AccountPaymentTerm(models.Model):
             "• 91: Valor por antecipação (usa parâmetros do beneficiário)\n\n"
             "⚠️ Importante: Todas as linhas de desconto terão este mesmo código_tipo_desconto.")
 
-    # Campo One2many para as linhas de desconto
     discount_line_ids = fields.One2many(
         'account.payment.term.discount',
         'payment_term_id',
@@ -35,7 +33,6 @@ class AccountPaymentTerm(models.Model):
              "⚠️ API exige ordem decrescente de datas."
     )
     
-    # Campo computado para mostrar resumo das condições
     discount_summary = fields.Text(
         string='Resumo dos Descontos',
         compute='_compute_discount_summary',
@@ -49,10 +46,10 @@ class AccountPaymentTerm(models.Model):
             if record.discount_line_ids and record.itau_discount_code != '00':
                 tipo_desc = dict(record._fields['itau_discount_code'].selection)[record.itau_discount_code]
                 linhas = []
-                for line in record.discount_line_ids.sorted('days', reverse=True):  # Ordem decrescente como API exige
-                    if record.itau_discount_code in ['02', '90']:  # Percentual
+                for line in record.discount_line_ids.sorted('days', reverse=True):
+                    if record.itau_discount_code in ['02', '90']:
                         linhas.append(f"• {line.days} dias: {line.value}%")
-                    else:  # Valor fixo
+                    else:
                         linhas.append(f"• {line.days} dias: R$ {line.value:.2f}")
                 
                 record.discount_summary = f"Tipo: {tipo_desc} (código {record.itau_discount_code})\n" + "\n".join(linhas)
@@ -85,47 +82,35 @@ class AccountPaymentTerm(models.Model):
         """
         self.ensure_one()
         
-        # Se não há tipo de desconto ou é '00', retorna vazio
         if not self.itau_discount_code or self.itau_discount_code == '00':
             return {}
         
-        # Se não há linhas de desconto, retorna vazio
         if not self.discount_line_ids:
             return {}
         
-        # Monta lista de descontos ordenada por dias (API exige ordem decrescente)
         descontos_list = []
         
-        for line in self.discount_line_ids.sorted('days', reverse=True):  # Ordem decrescente
+        for line in self.discount_line_ids.sorted('days', reverse=True):
             from datetime import timedelta
             
-            # Calcula data do desconto
             data_desconto = invoice_date + timedelta(days=line.days)
             
             desconto_info = {
                 'data_desconto': data_desconto.strftime('%Y-%m-%d')
             }
             
-            # Adiciona valor ou percentual conforme tipo
-            if self.itau_discount_code in ['02', '90']:  # Percentual
-                # Formato: 7 dígitos inteiros e 5 casas decimais (total 12 dígitos)
-                # Exemplo: 5.0% = "005000000000" 
+            if self.itau_discount_code in ['02', '90']:
                 percentual_formatado = "{:012.0f}".format(line.value * 10000000)
                 desconto_info['percentual_desconto'] = percentual_formatado
                 
-            elif self.itau_discount_code in ['01', '91']:  # Valor fixo
-                # Formato: 15 dígitos inteiros e 2 casas decimais (total 17 dígitos)
-                # Exemplo: R$ 10.50 = "00000000001050" (15 dígitos) + "50" (2 decimais) = "0000000000105050"
-                valor_em_centavos = int(line.value * 100)  # Converte para centavos
-                valor_formatado = "{:017d}".format(valor_em_centavos)
-                
-
+            elif self.itau_discount_code in ['01', '91']:
+                valor_em_centavos = int(line.value * 100)
+                valor_formatado = "{:017d}".format(valor_em_centavos)                
                 
                 desconto_info['valor_desconto'] = valor_formatado
             
             descontos_list.append(desconto_info)
         
-        # Retorna estrutura completa
         if descontos_list:
             return {
                 'codigo_tipo_desconto': self.itau_discount_code,

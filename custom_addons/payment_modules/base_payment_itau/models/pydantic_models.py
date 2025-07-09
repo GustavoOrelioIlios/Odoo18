@@ -80,9 +80,7 @@ class EnderecoModel(BaseModel):
         """Remove hífen do CEP se presente e valida"""
         if not v:
             return v
-        # Remove hífen se presente
         v = v.replace('-', '')
-        # Valida se tem exatamente 8 dígitos
         if not re.match(r'^\d{8}$', v):
             raise ValueError('CEP deve ter exatamente 8 dígitos')
         return v
@@ -164,10 +162,8 @@ class ValidadorBeneficiario:
             tuple: (sucesso: bool, dados_validados: dict, erros: list)
         """
         try:
-            # Valida usando o modelo Pydantic
             beneficiario = BeneficiarioItauModel(**beneficiario_data)
             
-            # Validações adicionais específicas
             erros_adicionais = self._validacoes_adicionais(beneficiario)
             
             if erros_adicionais:
@@ -185,12 +181,11 @@ class ValidadorBeneficiario:
         """Validações de negócio específicas"""
         erros = []
         
-        # Valida consistência entre tipo de pessoa e documentos
         tipo_pessoa = beneficiario.tipo_pessoa.codigo_tipo_pessoa
         cpf = beneficiario.tipo_pessoa.numero_cadastro_pessoa_fisica
         cnpj = beneficiario.tipo_pessoa.numero_cadastro_nacional_pessoa_juridica
         
-        if tipo_pessoa == 'F':  # Pessoa Física
+        if tipo_pessoa == 'F':
             if not cpf:
                 erros.append({
                     'campo': 'tipo_pessoa.numero_cadastro_pessoa_fisica',
@@ -202,7 +197,7 @@ class ValidadorBeneficiario:
                     'mensagem': 'CNPJ não deve ser preenchido para pessoa física'
                 })
         
-        elif tipo_pessoa == 'J':  # Pessoa Jurídica
+        elif tipo_pessoa == 'J':
             if not cnpj:
                 erros.append({
                     'campo': 'tipo_pessoa.numero_cadastro_nacional_pessoa_juridica',
@@ -225,7 +220,6 @@ class ValidadorBeneficiario:
             tipo_erro = erro['type']
             mensagem = erro['msg']
             
-            # Tradução personalizada baseada no tipo de erro
             if tipo_erro == 'missing':
                 mensagem_pt = f"Campo '{campo}' é obrigatório"
             elif tipo_erro == 'string_pattern_mismatch':
@@ -290,10 +284,6 @@ class ValidadorBeneficiario:
             }
         }
 
-
-# ===== MODELOS ANTIGOS (MANTIDOS PARA COMPATIBILIDADE) =====
-# Estes modelos serão usados quando migrarmos outras partes da validação
-
 class PydanticI18nPtBr:
     """Configuração de tradução para português brasileiro"""
     
@@ -315,7 +305,6 @@ class PydanticI18nPtBr:
         return translations
 
 
-# Mantendo modelos antigos para compatibilidade temporária
 class PagadorPessoaModel(BaseModel):
     """Modelo para dados da pessoa do pagador (estrutura aninhada)"""
     
@@ -415,7 +404,6 @@ class BeneficiarioModel(BaseModel):
         description="Dígito da conta (1 dígito)"
     )
     
-    # Campos de endereço
     logradouro: str = Field(..., min_length=5, max_length=200)
     bairro: str = Field(..., min_length=2, max_length=100)
     cidade: str = Field(..., min_length=2, max_length=100)
@@ -502,7 +490,6 @@ class BoletoIndividualModel(BaseModel):
         if isinstance(v, (int, float, Decimal)):
             v = str(v)
         
-        # Verifica se é um número válido
         try:
             valor_float = float(v)
             if valor_float <= 0:
@@ -676,15 +663,14 @@ class DescontoModel(BaseModel):
         if codigo != '00' and not v:
             raise ValueError('Quando código != 00, deve haver pelo menos uma linha de desconto')
         
-        # Valida se o tipo correto de desconto está sendo usado
         for desconto in v:
-            if codigo in ['02', '90']:  # Percentual
+            if codigo in ['02', '90']:
                 if desconto.valor_desconto:
                     raise ValueError(f'Para código {codigo} (percentual), use apenas percentual_desconto')
                 if not desconto.percentual_desconto:
                     raise ValueError(f'Para código {codigo} (percentual), percentual_desconto é obrigatório')
             
-            elif codigo in ['01', '91']:  # Valor fixo
+            elif codigo in ['01', '91']:
                 if desconto.percentual_desconto:
                     raise ValueError(f'Para código {codigo} (valor fixo), use apenas valor_desconto')
                 if not desconto.valor_desconto:
@@ -788,7 +774,6 @@ class BoletoModel(BaseModel):
         description="Data de emissão no formato YYYY-MM-DD"
     )
     
-    # === NOVOS CAMPOS PARA JUROS, MULTA E DESCONTO ===
     juros: Optional[JurosModel] = Field(
         None,
         description="Configurações de juros (opcional)"
@@ -802,7 +787,6 @@ class BoletoModel(BaseModel):
         description="Configurações de desconto (opcional)"
     )
     
-    # === CAMPOS PARA PROTESTO E NEGATIVAÇÃO ===
     protesto: Optional[ProtestoModel] = Field(
         None,
         description="Configurações de protesto (opcional)"
@@ -860,12 +844,10 @@ class ValidadorBoleto:
             tuple: (sucesso: bool, dados_validados: dict, erros: list)
         """
         try:
-            # Valida dados individuais
             beneficiario = BeneficiarioItauModel(**beneficiario_data)
             pagador = PagadorModel(**pagador_data)
             boleto = BoletoModel(**boleto_data)
             
-            # Valida dados completos
             boleto_completo = BoletoCompletoModel(
                 beneficiario=beneficiario,
                 pagador=pagador,
@@ -887,7 +869,6 @@ class ValidadorBoleto:
             tipo_erro = erro['type']
             mensagem = erro['msg']
             
-            # Tradução personalizada baseada no tipo de erro
             if tipo_erro == 'missing':
                 mensagem_pt = f"Campo '{campo}' é obrigatório"
             elif tipo_erro == 'string_pattern_mismatch':

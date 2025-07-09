@@ -7,8 +7,6 @@ class MoveBoleto(models.Model):
     _description = 'Registro de Boleto Bancário Genérico'
     _order = 'invoice_id, data_emissao desc'
 
-    # --- Campos Genéricos ---
-
     invoice_id = fields.Many2one(
         'account.move',
         string='Fatura',
@@ -58,7 +56,6 @@ class MoveBoleto(models.Model):
         readonly=True
     )
     
-    # Campo para Nosso Número do Sicoob
     sicoob_nosso_numero = fields.Char(
         string='Nosso Número (Sicoob)',
         copy=False,

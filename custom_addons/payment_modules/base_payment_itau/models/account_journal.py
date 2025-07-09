@@ -5,13 +5,11 @@ from odoo import models, fields, api
 class AccountJournal(models.Model):
     _inherit = 'account.journal'
 
-    # NOVO CAMPO
     itau_wallet_code = fields.Char(
         string='Código da Carteira de Cobrança (Itaú)',
         help='Código da Carteira de Cobrança fornecido pelo Itaú.'
     )
 
-    # NOVO CAMPO com códigos ajustados
     l10n_br_is_payment_mode_id = fields.Selection(
         selection=[
             ('01', 'DM - Duplicata Mercantil'),
@@ -46,14 +44,11 @@ class AccountJournal(models.Model):
         string='Código da Espécie do Título (Itaú)'
     )
 
-    # NOVO CAMPO
     l10n_br_is_payment_mode_description = fields.Char(
         string='Descrição da Espécie',
         compute='_compute_payment_mode_description',
         store=True
     )
-
-    # === EXTENSÃO DOS CAMPOS GENÉRICOS COM VALORES ESPECÍFICOS DO ITAÚ ===
     
     payment_interest_code = fields.Selection(
         selection_add=[

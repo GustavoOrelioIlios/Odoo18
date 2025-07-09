@@ -8,7 +8,6 @@ from datetime import timedelta
 class AccountPaymentTerm(models.Model):
     _inherit = 'account.payment.term'
 
-    # Campo para definir o tipo de desconto conforme API Sicoob
     sicoob_discount_code = fields.Selection([
         ('0', 'Sem Desconto'),
         ('1', 'Valor Fixo Até a Data Informada'),
@@ -29,7 +28,6 @@ class AccountPaymentTerm(models.Model):
             "• 5: Percentual por antecipação dia corrido\n"
             "• 6: Percentual por antecipação dia útil")
 
-    # Campo One2many para as linhas de desconto
     sicoob_discount_line_ids = fields.One2many(
         'account.payment.term.sicoob.discount',
         'payment_term_id',
@@ -39,7 +37,6 @@ class AccountPaymentTerm(models.Model):
              "⚠️ API exige ordem decrescente de datas."
     )
     
-    # Campo computado para mostrar resumo das condições
     sicoob_discount_summary = fields.Text(
         string='Resumo dos Descontos',
         compute='_compute_sicoob_discount_summary',
@@ -53,10 +50,10 @@ class AccountPaymentTerm(models.Model):
             if record.sicoob_discount_line_ids and record.sicoob_discount_code != '0':
                 tipo_desc = dict(record._fields['sicoob_discount_code'].selection)[record.sicoob_discount_code]
                 linhas = []
-                for line in record.sicoob_discount_line_ids.sorted('days', reverse=True):  # Ordem decrescente como API exige
-                    if record.sicoob_discount_code in ['2', '5', '6']:  # Percentual
+                for line in record.sicoob_discount_line_ids.sorted('days', reverse=True):
+                    if record.sicoob_discount_code in ['2', '5', '6']:
                         linhas.append(f"• {line.days} dias: {line.value}%")
-                    else:  # Valor fixo
+                    else:
                         linhas.append(f"• {line.days} dias: R$ {line.value:.2f}")
                 
                 record.sicoob_discount_summary = f"Tipo: {tipo_desc} (código {record.sicoob_discount_code})\n" + "\n".join(linhas)
@@ -89,34 +86,28 @@ class AccountPaymentTerm(models.Model):
         """
         self.ensure_one()
         
-        # Se não há tipo de desconto ou é '0', retorna vazio
         if not self.sicoob_discount_code or self.sicoob_discount_code == '0':
             return {}
         
-        # Se não há linhas de desconto, retorna vazio
         if not self.sicoob_discount_line_ids:
             return {}
         
-        # Monta lista de descontos ordenada por dias (API exige ordem decrescente)
         descontos_list = []
         
         for line in self.sicoob_discount_line_ids.sorted('days', reverse=True):
-            # Calcula data do desconto
             data_desconto = invoice_date + timedelta(days=line.days)
             
             desconto_info = {
                 'dataPrimeiroDesconto': data_desconto.strftime('%Y-%m-%d')
             }
             
-            # Adiciona valor ou percentual conforme tipo
-            if self.sicoob_discount_code in ['2', '5', '6']:  # Percentual
+            if self.sicoob_discount_code in ['2', '5', '6']:
                 desconto_info['valorPrimeiroDesconto'] = line.value
-            else:  # Valor fixo
+            else:
                 desconto_info['valorPrimeiroDesconto'] = line.value
             
             descontos_list.append(desconto_info)
         
-        # Retorna estrutura completa
         if descontos_list:
             return {
                 'tipoDesconto': self.sicoob_discount_code,

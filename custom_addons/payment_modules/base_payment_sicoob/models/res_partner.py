@@ -6,7 +6,6 @@ from odoo import models, fields
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    # === CAMPOS ESPECÍFICOS DO SICOOB ===
     sicoob_interest_code = fields.Selection([
         ('1', 'Valor por dia'),
         ('2', 'Taxa Mensal'),

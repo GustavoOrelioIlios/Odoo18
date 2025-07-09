@@ -31,7 +31,7 @@ class BasePaymentAPI(models.Model):
     )
     
     integracao = fields.Selection(
-        selection=[],  # Será populado pelos módulos específicos usando selection_add
+        selection=[], 
         string='Tipo de Integração', 
         required=True, 
         help='Tipo de integração de pagamento',
@@ -43,7 +43,6 @@ class BasePaymentAPI(models.Model):
         ('production', 'Produção')
     ], string='Ambiente', required=True, default='sandbox', tracking=True)
     
-    # API Configuration
     base_url = fields.Char(
         string='URL Base da API',
         required=True,
@@ -62,8 +61,7 @@ class BasePaymentAPI(models.Model):
         required=False,
         help='Chave secreta fornecida pelo banco'
     )
-    
-    # Connection Parameters
+
     timeout = fields.Integer(
         string='Timeout (segundos)',
         default=30,
@@ -88,7 +86,6 @@ class BasePaymentAPI(models.Model):
         help='Descrição detalhada da configuração'
     )
     
-    # Status fields
     last_connection_test = fields.Datetime(
         string='Último Teste de Conexão',
         readonly=True
@@ -110,7 +107,6 @@ class BasePaymentAPI(models.Model):
     def _onchange_integracao(self):
         """Atualiza campos baseado no tipo de integração"""
         if self.integracao:
-            # Reseta campos sensíveis ao mudar integração
             self.client_id = False
             self.client_secret = False
             self.base_url = False

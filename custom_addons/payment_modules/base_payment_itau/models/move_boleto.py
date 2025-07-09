@@ -7,7 +7,6 @@ class MoveBoletoItau(models.Model):
     _inherit = 'move.boleto'
     _description = 'Registro de Boleto Bancário - Itaú'
 
-    # Relacionamento com a Fatura
     invoice_id = fields.Many2one(
         'account.move',
         string='Fatura',
@@ -15,7 +14,6 @@ class MoveBoletoItau(models.Model):
         ondelete='cascade'
     )
 
-    # ID único do Boleto no Itaú
     itau_boleto_id = fields.Char(
         string='ID do Boleto no Itaú',
         copy=False,
@@ -25,23 +23,19 @@ class MoveBoletoItau(models.Model):
         help="ID único retornado pela API do Itaú ou um hash local para referência."
     )
 
-    # Código de Barras e Linha Digitável
     l10n_br_is_barcode = fields.Char(
         string='Código de Barras',
         copy=False
     )
-    # NOVO CAMPO
     l10n_br_is_barcode_formatted = fields.Char(
         string='Linha Digitável',
         copy=False
     )
 
-    # Datas
     data_emissao = fields.Date(
         string='Data de Emissão do Boleto',
         default=fields.Date.context_today
     )
-    # NOVO CAMPO
     data_limite_pagamento = fields.Date(
         string='Data Limite para Pagamento'
     ) 

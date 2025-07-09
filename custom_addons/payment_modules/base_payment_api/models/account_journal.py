@@ -6,7 +6,6 @@ from odoo import models, fields, api
 class AccountJournal(models.Model):
     _inherit = 'account.journal'
 
-    # === CAMPOS DE JUROS (PADRÃO) ===
     payment_interest_code = fields.Selection(
         selection=[],
         string='Código de Juros',
@@ -31,7 +30,6 @@ class AccountJournal(models.Model):
         help='Número de dias após o vencimento para iniciar a cobrança de juros'
     )
 
-    # === CAMPOS DE MULTA (PADRÃO) ===
     payment_penalty_code = fields.Selection(
         selection=[],
         string='Código de Multa',
@@ -60,7 +58,6 @@ class AccountJournal(models.Model):
     def _onchange_payment_interest_code(self):
         """Limpa campos relacionados quando o código de juros é alterado"""
         if self.payment_interest_code:
-            # Reset dos valores para permitir reconfiguração
             self.payment_interest_percent = 0.0
             self.payment_interest_value = 0.0
 
@@ -68,6 +65,5 @@ class AccountJournal(models.Model):
     def _onchange_payment_penalty_code(self):
         """Limpa campos relacionados quando o código de multa é alterado"""
         if self.payment_penalty_code:
-            # Reset dos valores para permitir reconfiguração
             self.payment_penalty_percent = 0.0
             self.payment_penalty_value = 0.0
