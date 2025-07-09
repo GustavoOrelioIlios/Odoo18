@@ -6,52 +6,52 @@ from odoo import models, fields, api
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
-    # === CAMPOS DE JUROS (PADRÃO) ===
+    # === CAMPOS DE JUROS ===
     payment_interest_code = fields.Selection(
         selection=[],
         string='Código de Juros',
-        help='Código padrão do tipo de juros aplicado após o vencimento'
+        help='Código do tipo de juros aplicado após o vencimento'
     )
     
     payment_interest_percent = fields.Float(
         string='Percentual de Juros',
         digits='Account',
-        help='Percentual padrão de juros aplicado (quando aplicável)'
+        help='Percentual de juros aplicado (quando aplicável)'
     )
     
     payment_interest_value = fields.Float(
         string='Valor Fixo de Juros',
         digits='Account',
-        help='Valor fixo padrão de juros aplicado (quando aplicável)'
+        help='Valor fixo de juros aplicado (quando aplicável)'
     )
     
     payment_interest_date_start = fields.Integer(
-        string='Dias para Início',
+        string='Dias para Início dos Juros',
         default=1,
         help='Número de dias após o vencimento para iniciar a cobrança de juros'
     )
 
-    # === CAMPOS DE MULTA (PADRÃO) ===
+    # === CAMPOS DE MULTA ===
     payment_penalty_code = fields.Selection(
         selection=[],
         string='Código de Multa',
-        help='Código padrão do tipo de multa aplicado após o vencimento'
+        help='Código do tipo de multa aplicado após o vencimento'
     )
     
     payment_penalty_percent = fields.Float(
         string='Percentual de Multa',
         digits='Account',
-        help='Percentual padrão de multa aplicado (quando aplicável)'
+        help='Percentual de multa aplicado (quando aplicável)'
     )
     
     payment_penalty_value = fields.Float(
         string='Valor Fixo de Multa',
         digits='Account',
-        help='Valor fixo padrão de multa aplicado (quando aplicável)'
+        help='Valor fixo de multa aplicado (quando aplicável)'
     )
     
     payment_penalty_date_start = fields.Integer(
-        string='Dias para Início',
+        string='Dias para Início da Multa',
         default=1,
         help='Número de dias após o vencimento para iniciar a cobrança da multa'
     )

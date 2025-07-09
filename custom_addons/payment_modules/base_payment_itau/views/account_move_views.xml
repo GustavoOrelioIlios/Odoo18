@@ -12,16 +12,8 @@
             <field name="inherit_id" ref="base_payment_api.view_move_form_dados_pagamento_tab"/>
             <field name="arch" type="xml">
                 <xpath expr="//page[@name='dados_pagamento']/group" position="inside">
-                    <group string="Configurações Itaú" name="itau_payment_config">
-                        <field name="itau_own_number" readonly="1"/>
-                        <field name="itau_protest_code"/>
-                        <field name="itau_protest_days" 
-                               invisible="itau_protest_code != '1'"
-                               required="itau_protest_code == '1'"/>
-                        <field name="itau_negativation_code"/>
-                        <field name="itau_negativation_days" 
-                               invisible="itau_negativation_code != '2'"
-                               required="itau_negativation_code == '2'"/>
+                    <group string="Itaú">
+                        <field name="l10n_br_is_own_number" readonly="1"/>
                     </group>
                 </xpath>
             </field>

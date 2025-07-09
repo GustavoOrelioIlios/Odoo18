@@ -1,17 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_move_form_sicoob_dados_pagamento" model="ir.ui.view">
-        <field name="name">account.move.form.sicoob.dados.pagamento</field>
-        <field name="model">account.move</field>
-        <field name="inherit_id" ref="base_payment_api.view_move_form_dados_pagamento_tab"/>
-        <field name="arch" type="xml">
-            <xpath expr="//page[@name='dados_pagamento']/group" position="inside">
-                <group string="Configurações Sicoob" name="sicoob_payment_config">
-                    <field name="sicoob_nosso_numero" readonly="1"/>
-                    <field name="sicoob_contract_number"/>
-                    <field name="sicoob_payment_limit_date"/>
-                </group>
-            </xpath>
-        </field>
-    </record>
+    <data>
+        <!-- TODO: Remover esta aba específica (Boleto Sicoob) da fatura antes de subir para produção.
+             Manter apenas a aba genérica de boletos que mostra todos os boletos relacionados à fatura.
+        -->
+
+        <!-- Adiciona botão "Emitir Boleto Sicoob" no cabeçalho da fatura -->
+        <record id="view_move_form_inherit_sicoob" model="ir.ui.view">
+            <field name="name">account.move.form.inherit.sicoob</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="base_payment_api.view_move_form_dados_pagamento_tab"/>
+            <field name="arch" type="xml">
+                <!-- Adiciona botão no header -->
+                <xpath expr="//header" position="inside">
+                    <button name="action_emitir_boleto_sicoob"
+                            type="object"
+                            string="Emitir Boleto Sicoob"
+                            class="oe_highlight"
+                            invisible="state != 'posted' or payment_state in ['paid', 'in_payment'] or move_type not in ['out_invoice', 'out_refund'] or not journal_id"/>
+                </xpath>
+                
+                <xpath expr="//notebook/page[@name='dados_pagamento']/group" position="inside">
+                    <group string="Sicoob">
+                        <field name="sicoob_nosso_numero" readonly="1"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
 </odoo> 
